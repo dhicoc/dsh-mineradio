@@ -24,14 +24,27 @@
    step; the smaller surfaces (stats / bubble / menu / + button) keep their
    own base alphas and only scale by the same frost multiplier. ---------- */
 [data-dsh-aqua] {
-  /* FLAT glass: one even tone per scheme (no vertical gradient — a darker
-     bottom stop read as a black fade inside the composer). Light glass carries
-     a faint warm champagne lift, dark glass a warm gray so the gold ambient
-     bloom reads through without going slab. */
-  --dsh-aqua-glass-card-light: color-mix(in srgb, rgb(249 244 233) calc(46% * var(--dsh-aqua-frost, 1)), transparent);
-  /* Warm studio gray: subtle warm tint that reads gold next to the bloom but
-     stays neutral enough not to turn the whole surface amber. */
-  --dsh-aqua-glass-card-dark: color-mix(in srgb, rgb(38 36 32) calc(52% * var(--dsh-aqua-frost, 1)), transparent);
+  /* Mineradio panel glass — the player's own recipe: two radial highlights
+     (top-left white, top-right brand accent) over a 145° dark gradient. The
+     frost knob scales every stop's alpha (calc() inside the gradient stops). */
+  --dsh-aqua-glass-card-light:
+    radial-gradient(circle at 16% 0%, rgb(255 255 255 / calc(0.22 * var(--dsh-aqua-frost, 1))), transparent 34%),
+    radial-gradient(circle at 88% 8%, rgb(154 111 44 / calc(0.10 * var(--dsh-aqua-frost, 1))), transparent 36%),
+    linear-gradient(145deg, rgb(244 210 138 / calc(0.10 * var(--dsh-aqua-frost, 1))), rgb(250 246 238 / calc(0.58 * var(--dsh-aqua-frost, 1))) 42%, rgb(244 240 232 / calc(0.64 * var(--dsh-aqua-frost, 1))));
+  --dsh-aqua-glass-card-dark:
+    radial-gradient(circle at 16% 0%, rgb(255 255 255 / calc(0.10 * var(--dsh-aqua-frost, 1))), transparent 34%),
+    radial-gradient(circle at 88% 8%, rgb(0 245 212 / calc(0.12 * var(--dsh-aqua-frost, 1))), transparent 36%),
+    linear-gradient(145deg, rgb(0 245 212 / calc(0.115 * var(--dsh-aqua-frost, 1))), rgb(12 13 18 / calc(0.70 * var(--dsh-aqua-frost, 1))) 42%, rgb(2 3 5 / calc(0.66 * var(--dsh-aqua-frost, 1))));
+  /* Mineradio glass depth: outer drop + brand bloom + inset top light +
+     inset bottom fade (the player's --glass-shadow recipe). */
+  --dsh-aqua-glass-shadow-light:
+    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    0 22px 64px rgb(38 26 8 / 0.16);
+  --dsh-aqua-glass-shadow-dark:
+    0 22px 64px rgb(0 0 0 / 0.30),
+    0 0 34px rgb(0 245 212 / 0.052),
+    inset 0 1px 0 rgb(255 255 255 / 0.16),
+    inset 0 -24px 58px rgb(0 0 0 / 0.16);
   /* Signature champagne-gold ambient bloom behind the glass (the Mineradio
      wordmark's bronze light) — colorized by the spotlight hue knob. */
   --dsh-aqua-bloom: hsla(var(--dsh-aqua-bloom-h, 44), 82%, 66%, 0.10);
@@ -97,16 +110,16 @@
   pointer-events: none;
   overflow: hidden;
   background:
-    radial-gradient(760px 420px at 50% -8%, rgba(160, 200, 255, 0.26), transparent 70%),
-    linear-gradient(180deg, rgba(156, 193, 231, 0.22) 0%, rgba(156, 193, 231, 0) 38%),
-    radial-gradient(900px 420px at 50% 108%, rgba(156, 193, 231, 0.14), transparent 70%);
+    radial-gradient(760px 420px at 50% -8%, rgba(244, 210, 138, 0.20), transparent 70%),
+    linear-gradient(180deg, rgba(214, 196, 160, 0.18) 0%, rgba(214, 196, 160, 0) 38%),
+    radial-gradient(900px 420px at 50% 108%, rgba(122, 215, 194, 0.12), transparent 70%);
 }
 
 [data-dsh-aqua] body[data-ds-dark-theme] [data-dsh-aqua-ambient] {
   background:
-    radial-gradient(760px 420px at 50% -8%, rgba(110, 165, 255, 0.13), transparent 70%),
-    linear-gradient(180deg, rgba(94, 143, 224, 0.13) 0%, rgba(94, 143, 224, 0) 46%),
-    radial-gradient(900px 420px at 50% 108%, rgba(94, 143, 224, 0.09), transparent 70%);
+    radial-gradient(760px 420px at 50% -8%, rgba(0, 245, 212, 0.07), transparent 70%),
+    linear-gradient(180deg, rgba(36, 66, 255, 0.08) 0%, rgba(36, 66, 255, 0) 46%),
+    radial-gradient(900px 420px at 50% 108%, rgba(244, 210, 138, 0.06), transparent 70%);
 }
 
 /* Background brightness knob: dark mode darkens (0 = pure black, 50 = off),
@@ -142,6 +155,17 @@
   inset: 0;
   width: 100%;
   height: 100%;
+}
+
+/* Star-river canvas: the Mineradio-style particle stage (bands of drifting
+   stardust with pointer glow and click ripples) painted ABOVE the fluid
+   board, under the brightness veil. */
+[data-dsh-aqua] [data-dsh-mineradio-stars] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
 }
 
 /* Custom wallpaper: the backdrop-source knob swaps the fluid board for an
@@ -326,9 +350,9 @@
    noticeably frosted relative to the cards around it. */
 [data-dsh-float] [data-dsh-surface] {
   background: color-mix(in srgb, rgb(255 255 255) calc(62% * var(--dsh-aqua-surface-frost, 1)), transparent);
-  border: 1px solid rgba(19, 45, 83, 0.16);
+  border: 1px solid rgba(154, 111, 44, 0.14);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
 }
 
 [data-dsh-float] [data-dsh-surface]:hover:not(:disabled) {
@@ -337,7 +361,7 @@
 
 [data-dsh-float] body[data-ds-dark-theme] [data-dsh-surface] {
   background: color-mix(in srgb, rgb(42 46 56) calc(62% * var(--dsh-aqua-surface-frost, 1)), transparent);
-  border-color: rgba(148, 180, 220, 0.2);
+  border-color: rgba(255, 255, 255, 0.08);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
@@ -367,9 +391,9 @@
    control reads as a brighter bead on the glass rather than a solid token. */
 [data-dsh-float] [data-dsh-add] {
   background: color-mix(in srgb, rgb(255 255 255) calc(40% * var(--dsh-aqua-frost, 1)), transparent);
-  border: 1px solid rgba(19, 45, 83, 0.18);
+  border: 1px solid rgba(154, 111, 44, 0.15);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
 }
 
 [data-dsh-float] [data-dsh-add]:hover:not(:disabled) {
@@ -378,7 +402,7 @@
 
 [data-dsh-float] body[data-ds-dark-theme] [data-dsh-add] {
   background: color-mix(in srgb, rgb(42 46 56) calc(40% * var(--dsh-aqua-frost, 1)), transparent);
-  border-color: rgba(148, 180, 220, 0.25);
+  border-color: rgba(255, 255, 255, 0.10);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
@@ -390,13 +414,13 @@
    white, both with a backdrop blur so the fluid shimmers behind the text. */
 [data-dsh-float] [class*='bubble'] {
   border-radius: 14px;
-  border: 1px solid rgba(19, 45, 83, 0.14);
+  border: 1px solid rgba(154, 111, 44, 0.12);
   background: color-mix(in srgb, rgb(255 255 255) calc(42% * var(--dsh-aqua-frost, 1)), transparent);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
 }
 
 [data-dsh-float] body[data-ds-dark-theme] [class*='bubble'] {
-  border-color: rgba(148, 180, 220, 0.14);
+  border-color: rgba(255, 255, 255, 0.06);
   background: color-mix(in srgb, rgb(0 0 0) calc(40% * var(--dsh-aqua-frost, 1)), transparent);
 }
 
@@ -404,12 +428,12 @@
    text never fights the film; the backdrop blur still frosts the video. */
 html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] [class*='bubble'] {
   background: color-mix(in srgb, rgb(255 255 255) 70%, transparent);
-  border-color: rgba(19, 45, 83, 0.2);
+  border-color: rgba(154, 111, 44, 0.18);
 }
 
 html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[data-ds-dark-theme] [class*='bubble'] {
   background: color-mix(in srgb, rgb(0 0 0) 50%, transparent);
-  border-color: rgba(148, 180, 220, 0.22);
+  border-color: rgba(255, 255, 255, 0.085);
 }
 
 /* Card family (hover cards, panels, plugin cards, tool cards, the composer). */
@@ -431,19 +455,15 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   position: relative;
   z-index: 8;
   background: var(--dsh-aqua-glass-card-light);
-  border: 1px solid rgba(19, 45, 83, 0.26);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 10px 36px rgba(19, 45, 83, 0.16);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
+  border: 1px solid rgba(154, 111, 44, 0.22);
+  box-shadow: var(--dsh-aqua-glass-shadow-light);
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
 }
 
 [data-dsh-float] body[data-ds-dark-theme] [data-composer-card] {
   background: var(--dsh-aqua-glass-card-dark);
-  border: 1px solid rgba(148, 180, 220, 0.32);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 10px 36px rgba(2, 6, 14, 0.5);
+  border: 1px solid rgba(0, 245, 212, 0.22);
+  box-shadow: var(--dsh-aqua-glass-shadow-dark);
 }
 
 /* Fused state: once the stats line is docked underneath, the WHOLE inputbar
@@ -457,21 +477,17 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   max-width: none;
   margin: 0 auto 12px;
   padding: 0;
-  border: 1px solid rgba(19, 45, 83, 0.26);
+  border: 1px solid rgba(154, 111, 44, 0.22);
   border-radius: 24px;
   background: var(--dsh-aqua-glass-card-light);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 10px 36px rgba(19, 45, 83, 0.16);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
+  box-shadow: var(--dsh-aqua-glass-shadow-light);
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
 }
 
 [data-dsh-float] body[data-ds-dark-theme] [data-dsh-inputbar]:has([data-dsh-stats]) {
-  border-color: rgba(148, 180, 220, 0.32);
+  border-color: rgba(0, 245, 212, 0.22);
   background: var(--dsh-aqua-glass-card-dark);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 10px 36px rgba(2, 6, 14, 0.5);
+  box-shadow: var(--dsh-aqua-glass-shadow-dark);
 }
 
 [data-dsh-float] [data-dsh-inputbar]:has([data-dsh-stats]) [data-composer-card] {
@@ -499,7 +515,7 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   display: block;
   padding: 2px 16px;
   border: none;
-  border-top: 1px solid rgba(19, 45, 83, 0.18);
+  border-top: 1px solid rgba(154, 111, 44, 0.15);
   border-radius: 0;
   background: transparent;
   box-shadow: none;
@@ -507,7 +523,7 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
 }
 
 [data-dsh-float] body[data-ds-dark-theme] [data-dsh-inputbar]:has([data-dsh-stats]) [data-dsh-stats] {
-  border-top-color: rgba(148, 180, 220, 0.24);
+  border-top-color: rgba(255, 255, 255, 0.095);
 }
 
 [data-dsh-float] [data-composer-card]::after {
@@ -533,14 +549,12 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
 [data-dsh-float] header {
   margin: 12px 16px 0;
   padding: 10px 16px 8px;
-  border: 1px solid rgba(19, 45, 83, 0.26);
+  border: 1px solid rgba(154, 111, 44, 0.22);
   border-bottom-color: transparent;
   border-radius: 20px;
   background: var(--dsh-aqua-glass-card-light);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 10px 34px rgba(19, 45, 83, 0.16);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
+  box-shadow: var(--dsh-aqua-glass-shadow-light);
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
 }
 
 [data-dsh-float] header::after {
@@ -548,12 +562,10 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
 }
 
 [data-dsh-float] body[data-ds-dark-theme] header {
-  border-color: rgba(148, 180, 220, 0.32);
+  border-color: rgba(0, 245, 212, 0.22);
   border-bottom-color: transparent;
   background: var(--dsh-aqua-glass-card-dark);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 8px 30px rgba(2, 6, 14, 0.32);
+  box-shadow: var(--dsh-aqua-glass-shadow-dark);
 }
 
 /* Collapsed: the floating rail reaches 12px into the chat gutter, so the
@@ -574,24 +586,20 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   z-index: 9;
   margin: 12px;
   padding: 10px 12px 14px;
-  border: 1px solid rgba(19, 45, 83, 0.26);
-  border-right: 1px solid rgba(150, 190, 245, 0.65);
+  border: 1px solid rgba(154, 111, 44, 0.22);
+  border-right: 1px solid rgba(244, 210, 138, 0.55);
   border-radius: 20px;
   background: var(--dsh-aqua-glass-card-light);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 10px 34px rgba(19, 45, 83, 0.16);
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
+  box-shadow: var(--dsh-aqua-glass-shadow-light);
   overflow: hidden;
 }
 
 [data-dsh-float] body[data-ds-dark-theme] [class*='sidebarCol'] {
-  border-color: rgba(148, 180, 220, 0.32);
-  border-right: 1px solid rgba(148, 180, 220, 0.2);
+  border-color: rgba(0, 245, 212, 0.22);
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
   background: var(--dsh-aqua-glass-card-dark);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 8px 30px rgba(2, 6, 14, 0.32);
+  box-shadow: var(--dsh-aqua-glass-shadow-dark);
 }
 
 /* Collapsed rail: floats too (mica mode). The rail keeps the app's own
@@ -632,22 +640,18 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   margin: 8px 16px 12px;
   width: calc(100% - 32px);
   height: calc(100% - 20px);
-  border: 1px solid rgba(19, 45, 83, 0.26);
+  border: 1px solid rgba(154, 111, 44, 0.22);
   border-radius: 20px;
   background: var(--dsh-aqua-glass-card-light);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.5),
-    0 10px 34px rgba(19, 45, 83, 0.16);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
+  box-shadow: var(--dsh-aqua-glass-shadow-light);
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
   overflow: hidden;
 }
 
 [data-dsh-float] body[data-ds-dark-theme] [data-dsh-trajectory] {
-  border-color: rgba(148, 180, 220, 0.32);
+  border-color: rgba(0, 245, 212, 0.22);
   background: var(--dsh-aqua-glass-card-dark);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    0 8px 30px rgba(2, 6, 14, 0.32);
+  box-shadow: var(--dsh-aqua-glass-shadow-dark);
 }
 
 /* The toolbar and timeline surfaces go transparent so the glass shows through. */
@@ -672,26 +676,26 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   max-width: none;
   margin: 0 auto;
   padding: 2px 16px;
-  border: 1px solid rgba(19, 45, 83, 0.26);
+  border: 1px solid rgba(154, 111, 44, 0.22);
   /* The ONLY seam cue: one hairline between the two pieces of the same
      glass slab (the composer card drops its bottom border when fused). */
-  border-top: 1px solid rgba(19, 45, 83, 0.18);
+  border-top: 1px solid rgba(154, 111, 44, 0.15);
   border-radius: 0 0 24px 24px;
   /* Continues the card's FLAT tone exactly, so the two read as one piece
      of glass with no tonal step at the seam. */
   background: var(--dsh-aqua-glass-card-light);
-  box-shadow: 0 10px 36px rgba(19, 45, 83, 0.16);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
+  box-shadow: var(--dsh-aqua-glass-shadow-light);
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
   /* Stats text: neutral slate (dark on light glass, near-white on dark
      glass) — kills the stock blue-gray cast. */
   color: rgb(38 46 62 / 0.9);
 }
 
 [data-dsh-float] body[data-ds-dark-theme] [data-dsh-stats] {
-  border-color: rgba(148, 180, 220, 0.32);
-  border-top-color: rgba(148, 180, 220, 0.24);
+  border-color: rgba(0, 245, 212, 0.22);
+  border-top-color: rgba(255, 255, 255, 0.095);
   background: var(--dsh-aqua-glass-card-dark);
-  box-shadow: 0 10px 36px rgba(2, 6, 14, 0.5);
+  box-shadow: var(--dsh-aqua-glass-shadow-dark);
   color: rgb(228 236 248 / 0.92);
 }
 
@@ -780,22 +784,22 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
 [data-dsh-float] [role='treeitem'][aria-selected='true'] {
   box-shadow:
     inset 2px 0 0 var(--dsw-specific-sidebar-nav-item-active-accent),
-    0 0 16px rgba(110, 155, 232, 0.14);
+    0 0 16px rgba(244, 210, 138, 0.16);
 }
 
 /* ---------- Hover light: buttons and menu cells answer with a soft blue ring. ---------- */
 [data-dsh-float] button[class*='button']:hover:not(:disabled),
 [data-dsh-float] [role='menuitem']:hover:not(:disabled) {
   box-shadow:
-    0 0 12px rgba(110, 155, 232, 0.16),
-    inset 0 0 0 1px rgba(148, 180, 220, 0.22);
+    0 0 12px rgba(244, 210, 138, 0.18),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.085);
 }
 
 /* Glass surfaces: menus and dialogs follow the site's frosted recipe
    (standard `backdrop-filter` only —see the composer card note). */
 [data-dsh-float] [role='menu'] {
   background: color-mix(in srgb, rgb(255 255 255) calc(62% * var(--dsh-aqua-frost, 1)), transparent);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 14px));
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
 }
 
 /* Dialogs keep their native token surface (bg-layer-2) and radius; no
@@ -844,12 +848,12 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
 
 /* ---------- Keyboard focus and text selection (both schemes). ---------- */
 [data-dsh-aqua] :focus-visible {
-  outline: 2px solid rgba(110, 155, 232, 0.85);
+  outline: 2px solid rgba(154, 111, 44, 0.75);
   outline-offset: 1px;
 }
 
 [data-dsh-aqua] ::selection {
-  background: rgba(110, 155, 232, 0.35);
+  background: rgba(154, 111, 44, 0.35);
 }
 
 /* ---------- Display typography: the serif face marks headings and the
@@ -864,7 +868,7 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
 }
 
 [data-dsh-aqua] body:not([data-ds-dark-theme]) [data-conversation-scroll] {
-  text-shadow: 0 0 1px rgba(255, 255, 255, 0.55), 0 1px 2px rgba(19, 45, 83, 0.08);
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.55), 0 1px 2px rgba(38, 26, 8, 0.10);
 }
 
 [data-dsh-float] [role='dialog'] h2 {

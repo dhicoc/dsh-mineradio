@@ -25,7 +25,7 @@ English | [中文](README.zh.md)
 ### Windows (one command)
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/XxHuberrr/Mineradio-DSH-Theme/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
+powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/dhicoc/dsh-mineradio/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
 ```
 
 Installs the **latest release** by default. No git needed — the installer falls back to a plain zip download. It links the plugin into the profile's `node_modules` and registers `ui-mineradio` in `cordis.patch.yml` (idempotent — safe to run again). Reload the web UI and it is on.
@@ -40,7 +40,7 @@ Pin a version or track the dev branch:
 ### Manual / via pnpm
 
 ```powershell
-dsh plugin --profile web add https://github.com/XxHuberrr/Mineradio-DSH-Theme
+dsh plugin --profile web add https://github.com/dhicoc/dsh-mineradio
 ```
 
 Then add a `ui-mineradio` entry manually to `$DSH_HOME/profiles/web/cordis.patch.yml`:

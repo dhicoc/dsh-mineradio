@@ -22,6 +22,7 @@ import { startSeamStamper } from './seam-stamper.ts'
 import { mountWhale, type WhaleHandle } from './whale.ts'
 import { mountMesh, type MeshHandle } from './mesh.ts'
 import { startSpotlight, SPOTLIGHT_ATTRIBUTE, PRESS_ATTRIBUTE } from './spotlight.ts'
+import { mountStarRiver, type StarRiverHandle } from './star-river.ts'
 
 /** html attribute selecting the Mineradio layer: CSS hooks and ambient effects.
  *  Kept as the internal `data-dsh-aqua` seam so the stylesheet's 100+ gated
@@ -248,7 +249,8 @@ export interface MineradioSettings {
   background: 'fluid' | 'wallpaper'
   /** Wallpaper image data URL (empty until one is picked). */
   wallpaper: string
-  /** Particle whale in the chat area center (the harness hero fish). */
+  /** Particle whale in the chat area center (opt-in extra; off by default —
+   *  the Mineradio star river is the shipped particle stage). */
   whale: boolean
   /** Ambient marine life (fish / bubbles / plankton). */
   critters: boolean
@@ -271,14 +273,14 @@ export interface MineradioSettings {
 /** Shipped defaults — what a first-time install sees (the tuned look). */
 const SETTINGS_DEFAULTS: MineradioSettings = {
   mode: 'mica',
-  blur: 20,
-  frost: 7,
+  blur: 22,
+  frost: 50,
   bgBrightness: 50,
   background: 'fluid',
   wallpaper: '',
-  whale: true,
-  critters: true,
-  mesh: true,
+  whale: false,
+  critters: false,
+  mesh: false,
   spotlight: true,
   press: true,
   fluidHue: 44,
@@ -396,13 +398,14 @@ function writeWallpaper(value: string): void {
   }
 }
 
-/** Read the particle-whale flag (absent means on). */
+/** Read the particle-whale flag (absent means off — the star river is the
+ *  default particle stage; the whale is an opt-in extra). */
 function readWhale(): boolean {
   try {
     const raw = localStorage.getItem(WHALE_KEY)
-    return raw === null ? true : raw === 'true'
+    return raw === null ? false : raw === 'true'
   } catch {
-    return true
+    return false
   }
 }
 
@@ -415,13 +418,13 @@ function writeWhale(value: boolean): void {
   }
 }
 
-/** Read the critters flag (absent means on). */
+/** Read the critters flag (absent means off — retired Aqua decoration). */
 function readCritters(): boolean {
   try {
     const raw = localStorage.getItem(CRITTERS_KEY)
-    return raw === null ? true : raw === 'true'
+    return raw === null ? false : raw === 'true'
   } catch {
-    return true
+    return false
   }
 }
 
@@ -434,13 +437,13 @@ function writeCritters(value: boolean): void {
   }
 }
 
-/** Read the interactive-mesh flag (absent means on). */
+/** Read the interactive-mesh flag (absent means off — retired Aqua decoration). */
 function readMesh(): boolean {
   try {
     const raw = localStorage.getItem(MESH_KEY)
-    return raw === null ? true : raw === 'true'
+    return raw === null ? false : raw === 'true'
   } catch {
-    return true
+    return false
   }
 }
 
@@ -518,6 +521,7 @@ export class MineradioLayer {
   private spotlightDisposer: (() => void) | undefined
   private whaleHandle: WhaleHandle | undefined
   private meshHandle: MeshHandle | undefined
+  private starRiverHandle: StarRiverHandle | undefined
   /** Object URL of the current large-video wallpaper (revoked on replace). */
   private videoObjectUrl: string | undefined
   /** IndexedDB id backing the current object URL (guards against reloads). */
@@ -548,6 +552,7 @@ export class MineradioLayer {
       this.themeListener = this.ctx.on('theme/change', () => {
         this.dark = this.resolveScheme()
         this.whaleHandle?.setDark(this.dark)
+        this.starRiverHandle?.setDark(this.dark)
         if (this.enabled) {
           this.applySettings()
           this.applyFluidPalettes()
@@ -597,6 +602,15 @@ export class MineradioLayer {
       localStorage.removeItem('dsh.ui-mineradio.tilt')
       localStorage.removeItem('dsh.ui-mineradio.lens')
       localStorage.removeItem('dsh.ui-mineradio.fluidTone')
+      // One-shot decoration migration: the Mineradio rework ships the star
+      // river as the particle stage, so stale whale/critters/mesh = on
+      // preferences from the Aqua era are dropped once and re-defaulted.
+      if (localStorage.getItem('dsh.ui-mineradio.decor.v2') === null) {
+        localStorage.removeItem(WHALE_KEY)
+        localStorage.removeItem(CRITTERS_KEY)
+        localStorage.removeItem(MESH_KEY)
+        localStorage.setItem('dsh.ui-mineradio.decor.v2', '1')
+      }
     } catch {
       /* ignore */
     }
@@ -964,6 +978,7 @@ export class MineradioLayer {
     document.documentElement.setAttribute(MINERADIO_ATTRIBUTE, '')
     ensureAmbientScene()
     ensurePageFades()
+    this.syncStarRiver()
     this.applySettings()
     this.applyTokens()
     this.mountFluid()
@@ -971,6 +986,16 @@ export class MineradioLayer {
     this.startSpotlightFeed()
     this.syncWhale()
     this.syncMesh()
+  }
+
+  /** Mount the Mineradio star-river particle stage (always on with the layer:
+   *  it is the skin's signature motion, like the player's backdrop). */
+  private syncStarRiver(): void {
+    if (!this.enabled) return
+    if (this.starRiverHandle !== undefined) return
+    const ambient = document.querySelector<HTMLElement>('[data-dsh-aqua-ambient]')
+    if (ambient === null) return
+    this.starRiverHandle = mountStarRiver(ambient, { dark: this.dark })
   }
 
   /** Mount or drop the particle whale to match enabled + the whale flag. */
@@ -1009,6 +1034,8 @@ export class MineradioLayer {
     document.documentElement.removeAttribute(PRESS_ATTRIBUTE)
     this.spotlightDisposer?.()
     this.spotlightDisposer = undefined
+    this.starRiverHandle?.dispose()
+    this.starRiverHandle = undefined
     this.whaleHandle?.dispose()
     this.whaleHandle = undefined
     this.meshHandle?.dispose()
