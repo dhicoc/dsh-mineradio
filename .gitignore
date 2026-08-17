@@ -1,0 +1,12 @@
+node_modules/
+lib/tsconfig.tsbuildinfo
+lib/types/**/*.js
+lib/types/**/*.js.map
+lib/types/**/*.d.ts.map
+# local build tooling (esbuild bootstrap) — not part of the published package
+build-tools/node_modules/
+build-tools/package.json
+build-tools/package-lock.json
+# screenshots / local test artifacts
+*.png
+*.log
