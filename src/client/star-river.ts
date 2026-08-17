@@ -211,8 +211,10 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
     if (ctx === null) return
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     ctx.clearRect(0, 0, width, height)
-    // Light scheme: a much quieter river so the glass stays legible.
-    const master = dark ? 1 : 0.4
+    // Light scheme: much quieter river. Dark scheme is the full galaxy, but
+    // kept a touch under full so the warm champagne particles don't read as a
+    // glaring golden field on the near-black board.
+    const master = dark ? 0.9 : 0.4
     ctx.globalCompositeOperation = 'lighter'
 
     for (const s of stars) {

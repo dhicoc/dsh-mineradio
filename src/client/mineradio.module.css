@@ -47,7 +47,7 @@
     inset 0 -24px 58px rgb(0 0 0 / 0.16);
   /* Signature champagne-gold ambient bloom behind the glass (the Mineradio
      wordmark's bronze light) — colorized by the spotlight hue knob. */
-  --dsh-aqua-bloom: hsla(var(--dsh-aqua-bloom-h, 44), 82%, 66%, 0.10);
+  --dsh-aqua-bloom: hsla(var(--dsh-aqua-bloom-h, 44), 82%, 66%, 0.07);
 }
 
 [data-dsh-aqua] [data-dsh-frame] {
@@ -110,8 +110,8 @@
   pointer-events: none;
   overflow: hidden;
   background:
-    radial-gradient(760px 420px at 50% -8%, rgba(244, 210, 138, 0.20), transparent 70%),
-    linear-gradient(180deg, rgba(214, 196, 160, 0.18) 0%, rgba(214, 196, 160, 0) 38%),
+    radial-gradient(760px 420px at 50% -8%, rgba(244, 210, 138, 0.12), transparent 70%),
+    linear-gradient(180deg, rgba(214, 196, 160, 0.11) 0%, rgba(214, 196, 160, 0) 38%),
     radial-gradient(900px 420px at 50% 108%, rgba(122, 215, 194, 0.12), transparent 70%);
 }
 
@@ -119,7 +119,7 @@
   background:
     radial-gradient(760px 420px at 50% -8%, rgba(0, 245, 212, 0.07), transparent 70%),
     linear-gradient(180deg, rgba(36, 66, 255, 0.08) 0%, rgba(36, 66, 255, 0) 46%),
-    radial-gradient(900px 420px at 50% 108%, rgba(244, 210, 138, 0.06), transparent 70%);
+    radial-gradient(900px 420px at 50% 108%, rgba(244, 210, 138, 0.04), transparent 70%);
 }
 
 /* Background brightness knob: dark mode darkens (0 = pure black, 50 = off),
