@@ -70,6 +70,11 @@ interface Ripple {
 /** Public knob: dark scheme runs the full galaxy, light scheme dims it. */
 export interface StarRiverOptions {
   dark: boolean
+  /** Respect the OS reduced-motion preference by rendering one static frame
+   *  instead of animating. OFF by default: the star river is the skin's
+   *  signature motion, so it animates unless an app-level switch opts in to
+   *  accessibility static frames. */
+  respectReducedMotion?: boolean
 }
 
 /** Handle returned by {@link mountStarRiver}. */
@@ -133,7 +138,7 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
   let frame = 0
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
-  let reducedMotion = reduced.matches
+  let reducedMotion = !!options.respectReducedMotion && reduced.matches
 
   const stars: StarParticle[] = []
   const ripples: Ripple[] = []
@@ -333,7 +338,7 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
   }
 
   function onReducedChange(): void {
-    reducedMotion = reduced.matches
+    reducedMotion = !!options.respectReducedMotion && reduced.matches
     if (reducedMotion) {
       cancelAnimationFrame(frame)
       frame = 0
