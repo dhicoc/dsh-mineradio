@@ -1,4 +1,5 @@
 # dsh-theme-mineradio
+[![Awesome DSH Plugin](https://awesome-dsh-plugin.com/badge.svg)](https://awesome-dsh-plugin.com)
 
 中文 | [English](README.md)
 
