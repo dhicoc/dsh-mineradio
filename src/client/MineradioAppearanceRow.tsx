@@ -14,7 +14,7 @@ import { IconCheckOutline16 } from '@deepseek-ai/dsh-client-ui-primitives'
 import type { PropsLocale, PropsRuntime, PropsStore } from '@deepseek-ai/dsh-client-ui-slots'
 // Type-only: pulls the `settings.general.item` SlotMap merge.
 import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
-import { fileToDataUrl, Knob, Segmented } from './MineradioControls.tsx'
+import { fileToDataUrl, HueStrip, Knob, Segmented } from './MineradioControls.tsx'
 import { loadVideoHandle, saveVideoBlob, saveVideoHandle } from './wallpaper-store.ts'
 import type { createMineradioRowStore } from './settings-store.ts'
 import css from './MineradioAppearanceRow.module.css'
@@ -31,26 +31,42 @@ export interface MineradioAppearanceRowInjected {
   setFluidHue: (value: number) => void
   /** Set the fluid depth, 0-100 (continuous). */
   setFluidDepth: (value: number) => void
+  /** Set the glass dispersion tint hue, degrees (0-360, continuous). */
+  setDispersionHue: (value: number) => void
+  /** Set the glass refraction strength, 0-100. */
+  setDispersionRefract: (value: number) => void
   /** Set the background brightness, 0-100 (0 = black, 50 = transparent, 100 = white). */
   setBgBrightness: (value: number) => void
   /** Set the backdrop source. */
   setBackground: (value: 'fluid' | 'wallpaper') => void
   /** Set the wallpaper image (a data URL). */
   setWallpaper: (value: string) => void
+  /** Set the wallpaper auto-tint flag (derive accent hues from the wallpaper). */
+  setAutoTint: (value: boolean) => void
   /** Set the particle-whale flag. */
   setWhale: (value: boolean) => void
   /** Set the ambient marine-life flag. */
   setCritters: (value: boolean) => void
   /** Set the interactive-mesh flag. */
   setMesh: (value: boolean) => void
+  /** Set the star-river particle density, 0-100. */
+  setStarDensity: (value: number) => void
   /** Set the cursor-spotlight flag. */
   setSpotlight: (value: boolean) => void
   /** Set the hover-press flag. */
   setPress: (value: boolean) => void
+  /** Set the audio-reactivity flag (mic-driven backdrop pulse). */
+  setAudioReact: (value: boolean) => void
   /** Set the wallpaper blur radius, px. */
   setWallpaperBlur: (value: number) => void
   /** Set the wallpaper frost veil, 0-100. */
   setWallpaperFrost: (value: number) => void
+  /** Set the wallpaper frost-mask flag (readability veil + stronger blur). */
+  setWallpaperMask: (value: boolean) => void
+  /** Set the frost-mask blur radius, px. */
+  setWallpaperMaskBlur: (value: number) => void
+  /** Set the frost-mask veil opacity, 0-100. */
+  setWallpaperMaskOpacity: (value: number) => void
   /** Set the video wallpaper blur radius, px. */
   setVideoBlur: (value: number) => void
   /** Set the video wallpaper brightness, 0-100. */
@@ -71,9 +87,9 @@ export type MineradioAppearanceRowComponentProps =
  */
 export function MineradioAppearanceRow(props: MineradioAppearanceRowComponentProps) {
   const {
-    t, setMode, setBlur, setFrost, setFluidHue, setFluidDepth, setBgBrightness,
-    setBackground, setWallpaper, setWhale, setCritters, setMesh, setSpotlight, setPress,
-    setWallpaperBlur, setWallpaperFrost, setVideoBlur, setVideoBrightness, authorizeVideo, useStore,
+    t, setMode, setBlur, setFrost, setFluidHue, setFluidDepth, setDispersionHue, setDispersionRefract, setBgBrightness,
+    setBackground, setWallpaper, setAutoTint, setWhale, setCritters, setMesh, setStarDensity, setSpotlight, setPress, setAudioReact,
+    setWallpaperBlur, setWallpaperFrost, setWallpaperMask, setWallpaperMaskBlur, setWallpaperMaskOpacity, setVideoBlur, setVideoBrightness, authorizeVideo, useStore,
   } = props
   const enabled = useStore(s => s.enabled)
   const mode = useStore(s => s.mode)
@@ -81,17 +97,25 @@ export function MineradioAppearanceRow(props: MineradioAppearanceRowComponentPro
   const frost = useStore(s => s.frost)
   const fluidHue = useStore(s => s.fluidHue)
   const fluidDepth = useStore(s => s.fluidDepth)
+  const dispersionHue = useStore(s => s.dispersionHue)
+  const dispersionRefract = useStore(s => s.dispersionRefract)
   const bgBrightness = useStore(s => s.bgBrightness)
   const dark = useStore(s => s.dark)
   const background = useStore(s => s.background)
   const whale = useStore(s => s.whale)
   const critters = useStore(s => s.critters)
   const mesh = useStore(s => s.mesh)
+  const starDensity = useStore(s => s.starDensity)
   const spotlight = useStore(s => s.spotlight)
   const press = useStore(s => s.press)
+  const audioReact = useStore(s => s.audioReact)
   const wallpaper = useStore(s => s.wallpaper)
+  const autoTint = useStore(s => s.autoTint)
   const wallpaperBlur = useStore(s => s.wallpaperBlur)
   const wallpaperFrost = useStore(s => s.wallpaperFrost)
+  const wallpaperMask = useStore(s => s.wallpaperMask)
+  const wallpaperMaskBlur = useStore(s => s.wallpaperMaskBlur)
+  const wallpaperMaskOpacity = useStore(s => s.wallpaperMaskOpacity)
   const videoBlur = useStore(s => s.videoBlur)
   const videoBrightness = useStore(s => s.videoBrightness)
   const fileRef = useRef<HTMLInputElement | null>(null)
@@ -222,9 +246,12 @@ export function MineradioAppearanceRow(props: MineradioAppearanceRowComponentPro
             />
           </div>
 
+          <HueStrip label={t('mineradio.dispersionHue')} value={dispersionHue} onChange={setDispersionHue} />
+          <Knob label={t('mineradio.dispersionRefract')} value={dispersionRefract} min={0} max={100} step={1} unit="%" onChange={setDispersionRefract} />
+
           {background === 'fluid' && (
             <>
-              <Knob label={t('mineradio.fluidHue')} value={fluidHue} min={0} max={360} step={1} unit="°" onChange={setFluidHue} />
+              <HueStrip label={t('mineradio.fluidHue')} value={fluidHue} onChange={setFluidHue} />
               <Knob label={t('mineradio.fluidDepth')} value={fluidDepth} min={0} max={100} step={1} unit="%" onChange={setFluidDepth} />
             </>
           )}
@@ -290,6 +317,40 @@ export function MineradioAppearanceRow(props: MineradioAppearanceRowComponentPro
                   )}
                 </div>
               </div>
+              <div className={css.row}>
+                <span className={css.rowLabel}>{t('mineradio.autoTint')}</span>
+                <button
+                  type="button"
+                  className={autoTint ? css.toggleOn : css.toggle}
+                  aria-pressed={autoTint}
+                  onClick={() => { setAutoTint(!autoTint) }}
+                >
+                  <span className={css.check}>
+                    {autoTint && <IconCheckOutline16 />}
+                  </span>
+                  {autoTint ? t('mineradio.enable') : t('mineradio.disable')}
+                </button>
+              </div>
+              <div className={css.row}>
+                <span className={css.rowLabel}>{t('mineradio.wallpaperMask')}</span>
+                <button
+                  type="button"
+                  className={wallpaperMask ? css.toggleOn : css.toggle}
+                  aria-pressed={wallpaperMask}
+                  onClick={() => { setWallpaperMask(!wallpaperMask) }}
+                >
+                  <span className={css.check}>
+                    {wallpaperMask && <IconCheckOutline16 />}
+                  </span>
+                  {wallpaperMask ? t('mineradio.enable') : t('mineradio.disable')}
+                </button>
+              </div>
+              {wallpaperMask && (
+                <>
+                  <Knob label={t('mineradio.wallpaperMaskBlur')} value={wallpaperMaskBlur} min={0} max={40} step={0.5} unit="px" onChange={setWallpaperMaskBlur} />
+                  <Knob label={t('mineradio.wallpaperMaskOpacity')} value={wallpaperMaskOpacity} min={0} max={100} step={1} unit="%" onChange={setWallpaperMaskOpacity} />
+                </>
+              )}
               <div className={css.knobHint}>{t('mineradio.wallpaperHint')}</div>
               {/* 视频壁纸不支持模糊/磨砂调节（视频直接清晰播放） */}
               {!isVideoWallpaper && (
@@ -362,6 +423,21 @@ export function MineradioAppearanceRow(props: MineradioAppearanceRowComponentPro
               {mesh ? t('mineradio.enable') : t('mineradio.disable')}
             </button>
           </div>
+          <div className={css.row}>
+            <span className={css.rowLabel}>{t('mineradio.audioReact')}</span>
+            <button
+              type="button"
+              className={audioReact ? css.toggleOn : css.toggle}
+              aria-pressed={audioReact}
+              onClick={() => { setAudioReact(!audioReact) }}
+            >
+              <span className={css.check}>
+                {audioReact && <IconCheckOutline16 />}
+              </span>
+              {audioReact ? t('mineradio.enable') : t('mineradio.disable')}
+            </button>
+          </div>
+          <Knob label={t('mineradio.starDensity')} value={starDensity} min={0} max={100} step={1} unit="%" onChange={setStarDensity} />
         </div>
       </div>
 

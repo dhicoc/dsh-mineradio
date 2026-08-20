@@ -35,15 +35,26 @@
     radial-gradient(circle at 16% 0%, rgb(255 255 255 / calc(0.10 * var(--dsh-aqua-frost, 1))), transparent 34%),
     radial-gradient(circle at 88% 8%, rgb(0 245 212 / calc(0.12 * var(--dsh-aqua-frost, 1))), transparent 36%),
     linear-gradient(145deg, rgb(0 245 212 / calc(0.115 * var(--dsh-aqua-frost, 1))), rgb(12 13 18 / calc(0.70 * var(--dsh-aqua-frost, 1))) 42%, rgb(2 3 5 / calc(0.66 * var(--dsh-aqua-frost, 1))));
-  /* Mineradio glass depth: outer drop + brand bloom + inset top light +
-     inset bottom fade (the player's --glass-shadow recipe). */
+  /* Mineradio glass depth + Liquid-Glass specular rim: a crisp 1px inner
+     edge, a bright catch-light, a faint thickness line, then the outer drop
+     + brand bloom. The catch-light reads --dsh-aqua-spec-x/y (written by
+     specular-parallax.ts, -1..1) so the rim brightens on the edge facing the
+     cursor and dims on the far edge — Apple Liquid Glass's moving edge light. */
   --dsh-aqua-glass-shadow-light:
-    inset 0 1px 0 rgb(255 255 255 / 0.55),
+    inset 0 0 0 1px rgb(255 255 255 / 0.20),
+    inset 0 1px 0 rgb(255 255 255 / calc(0.55 + 0.30 * (1 - var(--dsh-aqua-spec-y, 0)) / 2)),
+    inset 0 -1px 0 rgb(255 255 255 / calc(0.05 + 0.34 * (1 + var(--dsh-aqua-spec-y, 0)) / 2)),
+    inset 1px 0 0 rgb(255 255 255 / calc(0.04 + 0.14 * (1 - var(--dsh-aqua-spec-x, 0)) / 2)),
+    inset -1px 0 0 rgb(255 255 255 / calc(0.04 + 0.14 * (1 + var(--dsh-aqua-spec-x, 0)) / 2)),
     0 22px 64px rgb(38 26 8 / 0.16);
   --dsh-aqua-glass-shadow-dark:
+    inset 0 0 0 1px rgb(255 255 255 / 0.13),
+    inset 0 1px 0 rgb(255 255 255 / calc(0.22 + 0.20 * (1 - var(--dsh-aqua-spec-y, 0)) / 2)),
+    inset 0 -1px 0 rgb(255 255 255 / calc(0.03 + 0.20 * (1 + var(--dsh-aqua-spec-y, 0)) / 2)),
+    inset 1px 0 0 rgb(255 255 255 / calc(0.02 + 0.08 * (1 - var(--dsh-aqua-spec-x, 0)) / 2)),
+    inset -1px 0 0 rgb(255 255 255 / calc(0.02 + 0.08 * (1 + var(--dsh-aqua-spec-x, 0)) / 2)),
     0 22px 64px rgb(0 0 0 / 0.30),
     0 0 34px rgb(0 245 212 / 0.052),
-    inset 0 1px 0 rgb(255 255 255 / 0.16),
     inset 0 -24px 58px rgb(0 0 0 / 0.16);
   /* Signature champagne-gold ambient bloom behind the glass (the Mineradio
      wordmark's bronze light) — colorized by the spotlight hue knob. */
@@ -232,6 +243,38 @@
   background: rgb(8 12 20 / var(--dsh-aqua-video-dim, 0.36));
 }
 
+/* Frost mask (磨砂遮罩): a readable frosted-glass treatment over the
+   wallpaper — a stronger blur of its own knob plus a translucent scrim that
+   darkens a light wallpaper in dark mode (and lightens a dark one in light
+   mode) so the chat text stays legible. Enabled via
+   data-dsh-aqua-wallpaper-mask on <html>. */
+[data-dsh-aqua][data-dsh-aqua-wallpaper-mask] [data-dsh-aqua-wallpaper-img] {
+  filter: blur(var(--dsh-aqua-wallpaper-mask-blur, 24px));
+}
+
+[data-dsh-aqua][data-dsh-aqua-wallpaper-mask] [data-dsh-aqua-wallpaper-video] {
+  filter: blur(var(--dsh-aqua-wallpaper-mask-blur, 24px));
+}
+
+[data-dsh-aqua][data-dsh-aqua-wallpaper-mask] [data-dsh-aqua-wallpaper]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: rgb(255 255 255 / var(--dsh-aqua-wallpaper-mask-veil, 0.62));
+  pointer-events: none;
+}
+
+[data-dsh-aqua][data-dsh-aqua-wallpaper-mask] body[data-ds-dark-theme] [data-dsh-aqua-wallpaper]::before {
+  background: rgb(8 12 18 / var(--dsh-aqua-wallpaper-mask-veil, 0.62));
+}
+
+/* The mask silences the particle stage (star river) for a calm, frosted
+   backdrop — no fluid-particle motion behind the veil. */
+[data-dsh-aqua][data-dsh-aqua-wallpaper-mask] [data-dsh-aqua-ambient] [data-dsh-mineradio-stars] {
+  display: none;
+}
+
 /* Particle whale: centered on the main column (position/size arrive inline
    from the engine — the [data-phase] area right of the sidebar), screen
    blended over the dark backdrop, multiply blended (gray particles) over
@@ -254,9 +297,12 @@
   height: 100%;
 }
 
-/* Backdrop source: hide whichever board is not the active one. */
+/* Backdrop source: hide whichever board is not the active one. The fluid
+   canvas uses visibility (not display:none) so its layout box — and thus the
+   WebGL drawing buffer — survives the hide/show cycle; display:none would
+   collapse clientWidth/Height to 0, destroy the buffer, and paint black. */
 [data-dsh-aqua] [data-dsh-aqua-ambient][data-background='wallpaper'] [data-dsh-aqua-fluid-canvas] {
-  display: none;
+  visibility: hidden;
 }
 
 [data-dsh-aqua] [data-dsh-aqua-wallpaper][data-background='fluid'] {
@@ -436,6 +482,16 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   border-color: rgba(255, 255, 255, 0.085);
 }
 
+/* Streaming "reasoning row sweep": DSH overlays a shimmering ::after on the
+   active Think/tool row while it streams (data-state='running'). That sweep
+   uses var(--dsw-alias-bg-base) —which is near-black in this dark theme—so it
+   reads as a black band/shadow sweeping the row. Recolor it to a subtle warm
+   champagne shimmer so it reads as a soft highlight, not a dark card. */
+[data-dsh-aqua] [data-state='running'] [data-disclosure-row]::after,
+[data-dsh-aqua] [data-state='running'] [class*='_row']::after {
+  background: linear-gradient(90deg, transparent 0%, rgba(244, 210, 138, 0.10) 55%, transparent 100%) !important;
+}
+
 /* Card family (hover cards, panels, plugin cards, tool cards, the composer). */
 [data-dsh-float] [class*='card'] {
   border-radius: 14px;
@@ -575,9 +631,9 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   margin-left: 28px;
 }
 
-/* ---------- Sidebar: header-style glass card. Light = neutral cool white
-   (no green cast) with a luminous right edge; dark keeps its green-teal
-   tint. ---------- */
+/* ---------- Sidebar: header-style glass card — same recipe as the header
+   and composer (identical border, background, shadow and refraction) so the
+   glass reads as one family. ---------- */
 [data-dsh-float] [class*='sidebarCol'] {
   position: relative;
   /* Above the header card (8): the settings panel is a fixed overlay
@@ -586,20 +642,38 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   z-index: 9;
   margin: 12px;
   padding: 10px 12px 14px;
-  border: 1px solid rgba(154, 111, 44, 0.22);
-  border-right: 1px solid rgba(244, 210, 138, 0.55);
+  /* The specular rim IS the border: a crisp white hairline at the very edge,
+     brighter on top (the liquid-glass catch-light). No separate inset white
+     ring, so nothing floats 1px inside the border. */
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-top-color: rgba(255, 255, 255, 0.50);
   border-radius: 20px;
   background: var(--dsh-aqua-glass-card-light);
-  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
-  box-shadow: var(--dsh-aqua-glass-shadow-light);
+  box-shadow: 0 22px 64px rgb(38 26 8 / 0.16);
   overflow: hidden;
 }
 
+/* The frosted blur lives on a ::before veil, NOT the column itself: any
+   backdrop-filter value on the column would make it the containing block
+   for position:fixed descendants (its tooltips, dropdown menus and the
+   settings dialog), re-anchoring them into the 260px column and clipping
+   them under overflow:hidden. The veil keeps the identical blur while the
+   column stays transparent to fixed overlays. */
+[data-dsh-float] [class*='sidebarCol']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
+  pointer-events: none;
+  z-index: -1;
+}
+
 [data-dsh-float] body[data-ds-dark-theme] [class*='sidebarCol'] {
-  border-color: rgba(0, 245, 212, 0.22);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+  border-top-color: rgba(255, 255, 255, 0.30);
   background: var(--dsh-aqua-glass-card-dark);
-  box-shadow: var(--dsh-aqua-glass-shadow-dark);
+  box-shadow: 0 22px 64px rgb(0 0 0 / 0.30), 0 0 34px rgb(0 245 212 / 0.052), inset 0 -24px 58px rgb(0 0 0 / 0.16);
 }
 
 /* Collapsed rail: floats too (mica mode). The rail keeps the app's own
@@ -766,18 +840,25 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   transition: transform 0.1s ease-out;
 }
 
-/* ---------- Settings panel glass: material-only — a fixed 50px backdrop
-   blur with a scheme-differentiated translucent fill, applied in BOTH modes
-   (the gate is data-dsh-aqua, not the float attribute). The panel keeps its
-   stock layout, tokens and radius; only the surface turns glass. The `body`
-   hop out-ranks the compat generic glass (blur 12px on `panel` classes). ---------- */
+/* ---------- Settings panel glass: the SAME recipe as the main panes
+   (gradient fill + liquid-glass specular rim + champagne/teal hairline +
+   20px corners + the blur-knob-driven frost), so the dialog reads as one
+   family with the header/sidebar/composer instead of a stock flat panel.
+   Gated on data-dsh-aqua so it applies in BOTH float and compat modes; the
+   `body` hop out-ranks the compat generic glass (blur 12px on `panel`
+   classes) and the raised-surface 14px radius rule. ---------- */
 [data-dsh-aqua] body [role='dialog'] {
-  background: rgba(255, 255, 255, 0.45);
-  backdrop-filter: blur(50px);
+  border: 1px solid rgba(154, 111, 44, 0.22);
+  border-radius: 20px;
+  background: var(--dsh-aqua-glass-card-light);
+  box-shadow: var(--dsh-aqua-glass-shadow-light);
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
 }
 
 [data-dsh-aqua] body[data-ds-dark-theme] [role='dialog'] {
-  background: rgba(17, 26, 39, 0.55);
+  border-color: rgba(0, 245, 212, 0.22);
+  background: var(--dsh-aqua-glass-card-dark);
+  box-shadow: var(--dsh-aqua-glass-shadow-dark);
 }
 
 /* ---------- Sidebar: the selected session gets an accent bar and a soft halo. ---------- */
@@ -860,17 +941,6 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
    session tree, so the page reads in two voices —serif headings over the
    sans body. Space Grotesk keeps Latin/digits in the same stack. ---------- */
 
-/* Chat text: a 1px halo blurs the backdrop right at the glyph edges (the
-   closest CSS can get to "frost the background near the text"), plus a
-   whisper of drop shadow in light mode. */
-[data-dsh-aqua] [data-conversation-scroll] {
-  text-shadow: 0 0 1px rgba(0, 0, 0, 0.4);
-}
-
-[data-dsh-aqua] body:not([data-ds-dark-theme]) [data-conversation-scroll] {
-  text-shadow: 0 0 1px rgba(255, 255, 255, 0.55), 0 1px 2px rgba(38, 26, 8, 0.10);
-}
-
 [data-dsh-float] [role='dialog'] h2 {
   font-family: 'Space Grotesk Variable', 'Noto Serif SC', 'Songti SC', 'STSong', 'SimSun', serif;
   font-weight: 600;
@@ -927,6 +997,30 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
 
 @keyframes dsh-aqua-dialog-in {
   from { opacity: 0; transform: translateY(8px) scale(0.985); }
+}
+
+/* ---------- Glass chromatic dispersion: Mineradio's SVG filter, reworked as
+   colourless refraction (real backdrop warp) + a single-hue low-opacity edge
+   tint. The layer stamps data-dsh-dispersion once the SVG filter is injected,
+   so these hero surfaces layer the dispersion after their blur. The fused-slab
+   inner composer/stats keep backdrop-filter:none (their higher-specificity
+   fused rules still win); the slab itself carries it. ---------- */
+[data-dsh-float][data-dsh-dispersion] [data-composer-card],
+[data-dsh-float][data-dsh-dispersion] header,
+[data-dsh-float][data-dsh-dispersion] [data-dsh-trajectory],
+[data-dsh-float][data-dsh-dispersion] [data-dsh-stats],
+[data-dsh-float][data-dsh-dispersion] [data-dsh-inputbar]:has([data-dsh-stats]) {
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) url(#mineradio-glass-dispersion) saturate(1.22) brightness(1.04);
+}
+
+/* The tall sidebar uses a PORTRAIT displacement map so its refraction band
+   stays the same width as the wide panes' — one landscape map stretched onto
+   a 256×700 column would smear the vertical band and pinch the horizontal.
+   Written onto the ::before veil (not the column) for the same reason the
+   base blur is: a filter value on the column would re-anchor fixed
+   descendants and clip them. */
+[data-dsh-float][data-dsh-dispersion] [class*='sidebarCol']::before {
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) url(#mineradio-glass-dispersion-tall) saturate(1.22) brightness(1.04);
 }
 
 /* ---------- Compatibility mode: stock layout, generic glass material.

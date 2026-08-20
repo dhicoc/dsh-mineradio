@@ -3,7 +3,9 @@
  * (stepless slider + number box), a two-option Segmented picker, and the
  * wallpaper file reader. Kept in one file so the row stays a single surface.
  */
+import { useRef } from 'react'
 import css from './MineradioAppearanceRow.module.css'
+import { fluidHueSwatch } from './fluid-tones.ts'
 
 /** One slider + number box, wired to a single value. */
 export interface KnobProps {
@@ -76,6 +78,69 @@ export function Segmented<T extends string>({ label, value, options, onSelect }:
           {option.label}
         </button>
       ))}
+    </div>
+  )
+}
+
+/** A continuous rainbow strip for the fluid hue (0-360): click or drag to
+ *  pick any hue, with a colour-filled thumb marking the current value. */
+export interface HueStripProps {
+  label: string
+  value: number
+  onChange: (hue: number) => void
+}
+
+/** Render the fluid-hue rainbow strip. */
+export function HueStrip({ label, value, onChange }: HueStripProps) {
+  const stripRef = useRef<HTMLDivElement | null>(null)
+  const dragging = useRef(false)
+
+  const hueFromClientX = (clientX: number): number => {
+    const el = stripRef.current
+    if (el === null) return 0
+    const rect = el.getBoundingClientRect()
+    const ratio = Math.min(1, Math.max(0, (clientX - rect.left) / rect.width))
+    return Math.round(ratio * 360) % 360
+  }
+
+  const hue = ((Math.round(value) % 360) + 360) % 360
+
+  return (
+    <div className={css.hueStripRow}>
+      <span className={css.knobLabel}>{label}</span>
+      <div
+        ref={stripRef}
+        className={css.hueStrip}
+        role="slider"
+        aria-label={label}
+        aria-orientation="horizontal"
+        aria-valuemin={0}
+        aria-valuemax={360}
+        aria-valuenow={hue}
+        tabIndex={0}
+        onPointerDown={(e) => {
+          dragging.current = true
+          e.currentTarget.setPointerCapture(e.pointerId)
+          onChange(hueFromClientX(e.clientX))
+        }}
+        onPointerMove={(e) => {
+          if (dragging.current) onChange(hueFromClientX(e.clientX))
+        }}
+        onPointerUp={() => { dragging.current = false }}
+        onPointerCancel={() => { dragging.current = false }}
+        onKeyDown={(e) => {
+          if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return
+          e.preventDefault()
+          const step = e.shiftKey ? 30 : 5
+          onChange((hue + (e.key === 'ArrowLeft' ? -step : step) + 360) % 360)
+        }}
+      >
+        <span
+          className={css.hueStripThumb}
+          style={{ left: `${hue / 3.6}%`, backgroundColor: fluidHueSwatch(hue) }}
+        />
+      </div>
+      <span className={css.hueStripValue}>{hue}°</span>
     </div>
   )
 }

@@ -20,8 +20,8 @@
 /** Cap on device pixel ratio — 2x screens render indistinguishably at 1.5x. */
 const DPR_CAP = 1.5
 
-/** Hard particle ceiling regardless of viewport size. */
-const PARTICLE_CAP = 560
+/** Hard particle ceiling regardless of viewport size (2× the default field). */
+const MAX_PARTICLES = 1400
 
 /** Ripple lifetime in seconds and simultaneous cap (mirrors the feel of the
  *  player's 2s ripple window). */
@@ -30,6 +30,10 @@ const RIPPLE_CAP = 8
 
 /** Pointer influence radius, CSS pixels. */
 const POINTER_RADIUS = 130
+
+/** Pointer drag radius, CSS pixels — particles within this get pulled along
+ *  the cursor's motion. */
+const DRAG_RADIUS = 190
 
 /** Sprite variants: cool blue, violet, warm champagne, near-white. */
 type SpriteKind = 0 | 1 | 2 | 3
@@ -56,6 +60,9 @@ interface StarParticle {
   alpha: number
   /** Live rendered radius. */
   radius: number
+  /** Drag offset (px) — pushed along the pointer's motion, decays back. */
+  ox: number
+  oy: number
 }
 
 interface Ripple {
@@ -70,6 +77,8 @@ interface Ripple {
 /** Public knob: dark scheme runs the full galaxy, light scheme dims it. */
 export interface StarRiverOptions {
   dark: boolean
+  /** Particle density, 0-100 (50 = 1× the default field, 100 = 2×). */
+  density?: number
   /** Respect the OS reduced-motion preference by rendering one static frame
    *  instead of animating. OFF by default: the star river is the skin's
    *  signature motion, so it animates unless an app-level switch opts in to
@@ -81,6 +90,10 @@ export interface StarRiverOptions {
 export interface StarRiverHandle {
   /** Update the scheme knob. */
   setDark(dark: boolean): void
+  /** Update the particle density (0-100) and rebuild the field live. */
+  setDensity(density: number): void
+  /** Audio reactivity: bass `low` drives the hop, treble `high` the sparkle. */
+  setAudio(low: number, high: number): void
   /** Tear the stage down (canvas, listeners, animation). */
   dispose(): void
 }
@@ -131,23 +144,28 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
   ]
 
   let dark = options.dark
+  let density = Math.max(0, Math.min(100, options.density ?? 60))
   let width = 0
   let height = 0
   let dpr = 1
   let disposed = false
   let frame = 0
+  /** Audio-reactivity energy 0..1 (written by the layer's audio feed). */
+  let audioHigh = 0
+  let audioLow = 0
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)')
   let reducedMotion = !!options.respectReducedMotion && reduced.matches
 
   const stars: StarParticle[] = []
   const ripples: Ripple[] = []
-  const pointer = { x: -9999, y: -9999, active: false }
+  const pointer = { x: -9999, y: -9999, vx: 0, vy: 0, active: false, dragging: false }
 
   function build(): void {
     stars.length = 0
     const area = window.innerWidth * window.innerHeight
-    const byArea = Math.round(Math.min(PARTICLE_CAP, Math.max(180, area / 3400)))
+    const m = density / 50 // 0..2
+    const byArea = Math.round(Math.max(30, Math.min(MAX_PARTICLES, (area / 3400) * m)))
     for (let i = 0; i < byArea; i++) {
       const band = i % BANDS
       const seed = i * 0.618
@@ -172,6 +190,8 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
         y: 0,
         alpha: 0,
         radius: 0,
+        ox: 0,
+        oy: 0,
       })
     }
   }
@@ -222,17 +242,38 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
       const speed = (0.008 + bandN * 0.012) * s.pace * (reducedMotion ? 0 : 1)
       s.flow = (s.flow + speed * 0.016) % 1
 
+      // The drag offset relaxes back to the wave lane each frame.
+      s.ox *= 0.93
+      s.oy *= 0.93
+
       // Horizontal drift with a wide band-specific sweep.
       const sweep = width * (0.55 + bandN * 0.4)
-      s.x = (s.flow * 2 - 0.5) * sweep + width / 2
+      let bx = (s.flow * 2 - 0.5) * sweep + width / 2
       // Wrap into viewport.
-      if (s.x < -30) s.x += width + 60
-      else if (s.x > width + 30) s.x -= width + 60
+      if (bx < -30) bx += width + 60
+      else if (bx > width + 30) bx -= width + 60
 
       const wavePhase = s.flow * Math.PI * 2 * (1.1 + bandN * 0.5) + s.twinkleSeed
       const laneY = height * (0.06 + bandN * 0.88)
       const ridge = Math.exp(-(((s.local - 0.45) / 0.26) ** 2))
-      s.y = laneY + Math.sin(wavePhase) * (14 + bandN * 22) * (0.5 + s.depth) + (s.local - 0.5) * 26
+      const by = laneY + Math.sin(wavePhase) * (14 + bandN * 22) * (0.5 + s.depth) + (s.local - 0.5) * 26
+
+      // Drag: the pointer pulls nearby particles along its motion — a gentle
+      // stir on hover, a strong pull while the button is held.
+      if (pointer.active) {
+        const pdx = bx - pointer.x
+        const pdy = by - pointer.y
+        const pd = Math.sqrt(pdx * pdx + pdy * pdy)
+        if (pd < DRAG_RADIUS) {
+          const near = 1 - pd / DRAG_RADIUS
+          const pull = near * near * (pointer.dragging ? 1.9 : 0.35)
+          s.ox += pointer.vx * pull * 0.15
+          s.oy += pointer.vy * pull * 0.15
+        }
+      }
+
+      s.x = bx + s.ox
+      s.y = by + s.oy
 
       const twinklePhase = t * (0.5 + ((s.twinkleSeed * 0.37) % 1) * 0.9) + s.twinkleSeed
       const twinkle = (0.5 + 0.5 * Math.sin(twinklePhase)) ** 3
@@ -273,6 +314,19 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
         radius += glow * 2.0
       }
 
+      // Audio reactivity, split by frequency so the field matches the music's
+      // lows and highs dynamically:
+      //  - treble "high" → brighten + swell (a fast sparkle);
+      //  - bass "low"   → hop each particle upward (the beat's kick).
+      if (audioHigh > 0.001) {
+        alpha *= 1 + audioHigh * 0.9
+        radius *= 1 + audioHigh * 0.5
+      }
+      if (audioLow > 0.001) {
+        const hop = audioLow * 36 * (0.35 + s.depth * 0.65) * (0.7 + 0.3 * Math.sin(s.twinkleSeed * 6.1))
+        s.y -= hop
+      }
+
       if (alpha <= 0.012) continue
       const sprite = sprites[s.kind]
       const d = radius * 2
@@ -305,19 +359,36 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
 
   function onPointerMove(event: PointerEvent): void {
     const rect = canvas.getBoundingClientRect()
-    pointer.x = event.clientX - rect.left
-    pointer.y = event.clientY - rect.top
+    const nx = event.clientX - rect.left
+    const ny = event.clientY - rect.top
+    if (pointer.x < -9000) {
+      // First move in: anchor without a velocity spike.
+      pointer.vx = 0
+      pointer.vy = 0
+    } else {
+      pointer.vx += (nx - pointer.x - pointer.vx) * 0.5
+      pointer.vy += (ny - pointer.y - pointer.vy) * 0.5
+    }
+    pointer.x = nx
+    pointer.y = ny
     pointer.active = true
   }
 
   function onPointerLeave(): void {
     pointer.active = false
+    pointer.dragging = false
     pointer.x = -9999
     pointer.y = -9999
+    pointer.vx = 0
+    pointer.vy = 0
   }
 
   function onPointerDown(event: PointerEvent): void {
-    // Only drops on the empty backdrop — never when clicking through the UI.
+    // Hold-to-drag: while the button is down, particles near the cursor are
+    // pulled along its motion (stronger than the hover stir).
+    pointer.dragging = true
+    // The click ripple only drops on the empty backdrop — never when clicking
+    // through the UI.
     if (event.target instanceof Element && event.target.closest('button, a, input, textarea, [role="button"]') !== null) return
     const rect = canvas.getBoundingClientRect()
     if (ripples.length >= RIPPLE_CAP) ripples.shift()
@@ -327,6 +398,10 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
       age: 0,
       strength: 0.8 + Math.random() * 0.5,
     })
+  }
+
+  function onPointerUp(): void {
+    pointer.dragging = false
   }
 
   function onVisibility(): void {
@@ -356,6 +431,7 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
   window.addEventListener('resize', onResize)
   window.addEventListener('pointermove', onPointerMove, { passive: true })
   window.addEventListener('pointerdown', onPointerDown, { passive: true })
+  window.addEventListener('pointerup', onPointerUp, { passive: true })
   window.addEventListener('pointerout', onPointerLeave, { passive: true })
   document.addEventListener('visibilitychange', onVisibility)
   reduced.addEventListener('change', onReducedChange)
@@ -368,12 +444,22 @@ export function mountStarRiver(ambient: HTMLElement, options: StarRiverOptions):
       dark = next
       if (reducedMotion) render(0)
     },
+    setDensity(next: number): void {
+      density = Math.max(0, Math.min(100, next))
+      build()
+      if (reducedMotion) render(0)
+    },
+    setAudio(low: number, high: number): void {
+      audioLow = Math.max(0, Math.min(1, low))
+      audioHigh = Math.max(0, Math.min(1, high))
+    },
     dispose(): void {
       disposed = true
       cancelAnimationFrame(frame)
       window.removeEventListener('resize', onResize)
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerdown', onPointerDown)
+      window.removeEventListener('pointerup', onPointerUp)
       window.removeEventListener('pointerout', onPointerLeave)
       document.removeEventListener('visibilitychange', onVisibility)
       reduced.removeEventListener('change', onReducedChange)

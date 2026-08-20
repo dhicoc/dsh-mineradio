@@ -205,6 +205,9 @@ export interface FluidShaderHandle {
   setParams: (params: FluidParams) => void
   /** Stir the fluid at normalized coordinates with a velocity burst (wakes). */
   stir: (x: number, y: number, vx: number, vy: number) => void
+  /** Audio reactivity: bass energy 0..1 speeds the flow and amplifies the
+   *  turbulence (ripple amplitude). */
+  setAudioLow: (level: number) => void
   /** Stop the loop and release listeners. */
   dispose: () => void
 }
@@ -225,6 +228,7 @@ export function attachFluidShader(canvas: HTMLCanvasElement, params: FluidParams
     return {
       setParams: () => {},
       stir: () => {},
+      setAudioLow: () => {},
       dispose: () => {},
     }
   }
@@ -263,6 +267,7 @@ export function attachFluidShader(canvas: HTMLCanvasElement, params: FluidParams
     return {
       setParams: () => {},
       stir: () => {},
+      setAudioLow: () => {},
       dispose: () => {},
     }
   }
@@ -337,6 +342,8 @@ export function attachFluidShader(canvas: HTMLCanvasElement, params: FluidParams
   let flowHeight = 0
   let flip = false
   let current: FluidParams = { ...params }
+  /** Audio-reactivity bass level 0..1 (written by the layer's audio feed). */
+  let audioLow = 0
   const pointer = { x: 0.5, y: 0.5, smoothX: 0.5, smoothY: 0.5, vx: 0, vy: 0, svx: 0, svy: 0 }
   const dprCap = Math.min(window.devicePixelRatio || 1, 1.5)
   width = Math.round(canvas.clientWidth * dprCap)
@@ -371,6 +378,7 @@ export function attachFluidShader(canvas: HTMLCanvasElement, params: FluidParams
 
   const start = performance.now()
   let raf = 0
+  let running = false
   let previous = 0
   const step = 1000 / 30
 
@@ -382,7 +390,11 @@ export function attachFluidShader(canvas: HTMLCanvasElement, params: FluidParams
     const ratio = Math.min(window.devicePixelRatio || 1, 1.5)
     const nextWidth = Math.round(canvas.clientWidth * ratio)
     const nextHeight = Math.round(canvas.clientHeight * ratio)
-    if (nextWidth !== width || nextHeight !== height) {
+    // A display:none canvas reports 0×0 — resizing to that destroys the WebGL
+    // drawing buffer (and can drop the context on some platforms), leaving the
+    // board black until a refresh. Keep the last real size so the buffer stays
+    // warm through any hide/show cycle.
+    if (nextWidth > 0 && nextHeight > 0 && (nextWidth !== width || nextHeight !== height)) {
       width = nextWidth
       height = nextHeight
       canvas.width = width
@@ -425,7 +437,7 @@ export function attachFluidShader(canvas: HTMLCanvasElement, params: FluidParams
     gl.activeTexture(gl.TEXTURE0)
     gl.bindTexture(gl.TEXTURE_2D, write.tex)
     gl.uniform1i(display.flowmap, 0)
-    const time = (performance.now() - start) * 0.001 * (p.speed / 100)
+    const time = (performance.now() - start) * 0.001 * (p.speed * (1 + audioLow * 1.3) / 100)
     gl.uniform1f(display.time, time)
     gl.uniform1f(display.pixelRatio, window.devicePixelRatio || 1)
     gl.uniform2f(display.resolution, width, height)
@@ -446,15 +458,22 @@ export function attachFluidShader(canvas: HTMLCanvasElement, params: FluidParams
     gl.uniform1f(display.distortion, p.distortion / 100)
     gl.uniform1f(display.swirl, p.swirl / 50)
     gl.uniform1f(display.swirlIterations, p.swirlIterations)
-    gl.uniform1f(display.distortBoost, p.distortBoost)
+    gl.uniform1f(display.distortBoost, p.distortBoost * (1 + audioLow * 0.85))
     gl.uniform1f(display.noiseBoost, p.noiseBoost)
-    gl.uniform1f(display.swirlBoost, p.swirlBoost)
+    gl.uniform1f(display.swirlBoost, p.swirlBoost * (1 + audioLow * 0.6))
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4)
   }
 
   const handle: FluidShaderHandle = {
     setParams: (next: FluidParams) => {
       current = { ...next }
+      // Reduced-motion renders a single static frame and stops the loop; if
+      // the loop is not running, re-render that one frame so a palette switch
+      // still takes effect immediately (no refresh needed).
+      if (!running) {
+        frame(performance.now())
+        cancelAnimationFrame(raf)
+      }
     },
     stir: (x: number, y: number, vx: number, vy: number) => {
       // Damped stir: the brush glides toward the event point and the
@@ -464,6 +483,9 @@ export function attachFluidShader(canvas: HTMLCanvasElement, params: FluidParams
       pointer.y += (y - pointer.y) * 0.35
       pointer.svx += (vx - pointer.svx) * 0.3
       pointer.svy += (vy - pointer.svy) * 0.3
+    },
+    setAudioLow: (level: number) => {
+      audioLow = Math.max(0, Math.min(1, level))
     },
     dispose: () => {
       cancelAnimationFrame(raf)
@@ -477,6 +499,7 @@ export function attachFluidShader(canvas: HTMLCanvasElement, params: FluidParams
     return handle
   }
 
+  running = true
   raf = requestAnimationFrame(frame)
   return handle
 }

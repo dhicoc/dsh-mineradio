@@ -23,6 +23,11 @@ import { mountWhale, type WhaleHandle } from './whale.ts'
 import { mountMesh, type MeshHandle } from './mesh.ts'
 import { startSpotlight, SPOTLIGHT_ATTRIBUTE, PRESS_ATTRIBUTE } from './spotlight.ts'
 import { mountStarRiver, type StarRiverHandle } from './star-river.ts'
+import { startCinemaDrift, type CinemaDriftHandle } from './cinema-drift.ts'
+import { startGlassDispersion, type GlassDispersionHandle } from './glass-dispersion.ts'
+import { startSpecularParallax } from './specular-parallax.ts'
+import { createAudioReactivity, type AudioReactivityHandle } from './audio-reactivity.ts'
+import { extractDominantHue } from './color-extract.ts'
 
 /** html attribute selecting the Mineradio layer: CSS hooks and ambient effects.
  *  Kept as the internal `data-dsh-aqua` seam so the stylesheet's 100+ gated
@@ -36,7 +41,7 @@ export const MINERADIO_ENABLED_KEY = 'dsh.ui-mineradio.enabled'
 export const DEFAULT_ENABLED = true
 
 /** The layer's identity in the theme override stack (inspection-visible). */
-const OVERRIDE_SOURCE = '@deepseek-ai/dsh-client-ui-mineradio'
+const OVERRIDE_SOURCE = 'dsh-theme-mineradio'
 
 const FONT_STACK = "'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', "
   + "'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif"
@@ -67,14 +72,16 @@ export const MINERADIO_TOKEN_OVERRIDES: ThemeTokenOverrides = {
   // Typography: Inter + Noto Sans SC, CJK keeps the system stack.
   '--dsw-font-family': both(FONT_STACK),
 
-  // Backgrounds.
+  // Backgrounds. The base stays opaque (the fallback behind the fluid); every
+  // LAYERED surface is translucent so the fluid/wallpaper shows through the
+  // controls, dropdowns and cards — no solid black slabs anywhere.
   '--dsw-alias-bg-base': { light: '#F7F3EA', dark: INK },
-  '--dsw-alias-bg-layer-1': { light: '#FFFFFF', dark: PAPER },
-  '--dsw-alias-bg-layer-2': { light: '#F0EAE0', dark: '#15171C' },
-  '--dsw-alias-bg-layer-3': { light: '#E9E2D6', dark: '#1C1F25' },
-  '--dsw-alias-bg-overlay': { light: '#E3DBCB', dark: '#23262D' },
-  '--dsw-alias-bg-module-platform': { light: '#FFFFFF', dark: PAPER },
-  '--dsw-alias-bg-multi-select': { light: '#FFFFFF', dark: '#15171C' },
+  '--dsw-alias-bg-layer-1': { light: 'rgba(255, 255, 255, 0.55)', dark: 'rgba(14, 16, 20, 0.55)' },
+  '--dsw-alias-bg-layer-2': { light: 'rgba(240, 234, 224, 0.50)', dark: 'rgba(21, 23, 28, 0.55)' },
+  '--dsw-alias-bg-layer-3': { light: 'rgba(233, 226, 214, 0.45)', dark: 'rgba(28, 31, 37, 0.50)' },
+  '--dsw-alias-bg-overlay': { light: 'rgba(227, 219, 203, 0.60)', dark: 'rgba(35, 38, 45, 0.60)' },
+  '--dsw-alias-bg-module-platform': { light: 'rgba(255, 255, 255, 0.55)', dark: 'rgba(14, 16, 20, 0.55)' },
+  '--dsw-alias-bg-multi-select': { light: 'rgba(255, 255, 255, 0.55)', dark: 'rgba(21, 23, 28, 0.55)' },
   '--dsw-alias-bg-skeleton': { light: 'rgba(154, 111, 44, 0.10)', dark: 'rgba(244, 210, 138, 0.12)' },
   '--dsw-alias-bg-mask-1': { light: 'rgba(24, 22, 18, 0.30)', dark: 'rgba(4, 5, 6, 0.55)' },
   '--dsw-alias-bg-mask-2': { light: 'rgba(24, 22, 18, 0.12)', dark: 'rgba(4, 5, 6, 0.25)' },
@@ -119,12 +126,12 @@ export const MINERADIO_TOKEN_OVERRIDES: ThemeTokenOverrides = {
   '--dsw-alias-button-primary-dimmed': { light: 'rgba(244, 210, 138, 0.24)', dark: 'rgba(244, 210, 138, 0.16)' },
   '--dsw-alias-button-info-fill': { light: CHAMPAGNE_DEEP, dark: CHAMPAGNE },
   '--dsw-alias-button-info-hover': { light: '#B68A38', dark: '#F7DDA2' },
-  '--dsw-alias-button-elevated-fill': { light: '#FFFFFF', dark: '#15171C' },
-  '--dsw-alias-button-floating-fill': { light: '#FFFFFF', dark: '#15171C' },
-  '--dsw-alias-button-floating-hover': { light: '#F2EAE0', dark: '#1C1F25' },
+  '--dsw-alias-button-elevated-fill': { light: '#FFFFFF', dark: 'rgba(21, 23, 28, 0.55)' },
+  '--dsw-alias-button-floating-fill': { light: '#FFFFFF', dark: 'rgba(21, 23, 28, 0.55)' },
+  '--dsw-alias-button-floating-hover': { light: '#F2EAE0', dark: 'rgba(28, 31, 37, 0.55)' },
   '--dsw-alias-button-contrast-fill': { light: '#2A241A', dark: '#F2F0EA' },
-  '--dsw-alias-button-ghost-active-fill': { light: 'rgba(244, 210, 138, 0.16)', dark: '#1C1F25' },
-  '--dsw-alias-button-ghost-active-hover': { light: 'rgba(244, 210, 138, 0.22)', dark: '#15171C' },
+  '--dsw-alias-button-ghost-active-fill': { light: 'rgba(244, 210, 138, 0.16)', dark: 'rgba(28, 31, 37, 0.55)' },
+  '--dsw-alias-button-ghost-active-hover': { light: 'rgba(244, 210, 138, 0.22)', dark: 'rgba(21, 23, 28, 0.55)' },
   '--dsw-alias-button-ghost-active-border': { light: CHAMPAGNE_DEEP, dark: '#BF9E5B' },
 
   // Interaction fills.
@@ -132,17 +139,17 @@ export const MINERADIO_TOKEN_OVERRIDES: ThemeTokenOverrides = {
   '--dsw-alias-interactive-bg-hover-accent': { light: 'rgba(154, 111, 44, 0.16)', dark: 'rgba(244, 210, 138, 0.20)' },
   '--dsw-alias-interactive-bg-active': { light: 'rgba(154, 111, 44, 0.22)', dark: 'rgba(244, 210, 138, 0.26)' },
   '--dsw-alias-interactive-bg-hover-danger': { light: 'rgba(255, 83, 103, 0.06)', dark: 'rgba(255, 83, 103, 0.14)' },
-  '--dsw-alias-interactive-bg-hover-solid': { light: '#F2EAE0', dark: '#1C1F25' },
+  '--dsw-alias-interactive-bg-hover-solid': { light: '#F2EAE0', dark: 'rgba(28, 31, 37, 0.55)' },
 
-  // Markdown / code surfaces.
-  '--dsw-alias-markdown-code-block': { light: '#F2EAE0', dark: '#0D0E11' },
-  '--dsw-alias-markdown-code-block-banner': { light: '#F5EEE4', dark: '#121418' },
+  // Markdown / code surfaces — translucent so code blocks read as glass.
+  '--dsw-alias-markdown-code-block': { light: '#F2EAE0', dark: 'rgba(13, 14, 17, 0.55)' },
+  '--dsw-alias-markdown-code-block-banner': { light: '#F5EEE4', dark: 'rgba(18, 20, 24, 0.55)' },
   '--dsw-alias-markdown-inline-code': { light: 'rgba(244, 210, 138, 0.20)', dark: 'rgba(244, 210, 138, 0.10)' },
-  '--dsw-alias-markdown-citation': { light: '#F0E9DC', dark: '#191B20' },
-  '--dsw-alias-markdown-tag': { light: 'rgba(244, 210, 138, 0.18)', dark: '#15171C' },
-  '--dsw-alias-markdown-placeholder': { light: '#F0E9DC', dark: '#121418' },
-  '--dsw-alias-markdown-code-segment-selected': { light: '#FFFFFF', dark: '#1C1F25' },
-  '--dsw-alias-markdown-code-segment-unselected': { light: '#F2EAE0', dark: '#0E1013' },
+  '--dsw-alias-markdown-citation': { light: '#F0E9DC', dark: 'rgba(25, 27, 32, 0.55)' },
+  '--dsw-alias-markdown-tag': { light: 'rgba(244, 210, 138, 0.18)', dark: 'rgba(21, 23, 28, 0.55)' },
+  '--dsw-alias-markdown-placeholder': { light: '#F0E9DC', dark: 'rgba(18, 20, 24, 0.55)' },
+  '--dsw-alias-markdown-code-segment-selected': { light: '#FFFFFF', dark: 'rgba(28, 31, 37, 0.55)' },
+  '--dsw-alias-markdown-code-segment-unselected': { light: '#F2EAE0', dark: 'rgba(14, 16, 19, 0.55)' },
 
   // Scrollbars.
   '--dsw-alias-scrollbar-bg-l1': { light: 'rgba(154, 111, 44, 0.28)', dark: 'rgba(244, 210, 138, 0.28)' },
@@ -151,20 +158,22 @@ export const MINERADIO_TOKEN_OVERRIDES: ThemeTokenOverrides = {
   '--dsw-alias-scrollbar-hover-l2': { light: 'rgba(154, 111, 44, 0.60)', dark: 'rgba(244, 210, 138, 0.52)' },
 
   // Specific surfaces. The sidebar root fill goes transparent — the glass
-  // panel styling lives on the column itself, so no double tint.
+  // panel styling lives on the column itself, so no double tint. The small
+  // surfaces (nav item, menu, selector, bubble, tip, toast, tooltip) are
+  // translucent so the fluid reads through them instead of solid slabs.
   '--dsw-specific-sidebar-fill': { light: 'transparent', dark: 'transparent' },
-  '--dsw-specific-sidebar-nav-item-active': { light: 'rgba(244, 210, 138, 0.18)', dark: '#1A1D22' },
-  '--dsw-specific-sidebar-nav-item-hover': { light: 'rgba(244, 210, 138, 0.12)', dark: '#15171C' },
+  '--dsw-specific-sidebar-nav-item-active': { light: 'rgba(244, 210, 138, 0.18)', dark: 'rgba(26, 29, 34, 0.55)' },
+  '--dsw-specific-sidebar-nav-item-hover': { light: 'rgba(244, 210, 138, 0.12)', dark: 'rgba(21, 23, 28, 0.55)' },
   '--dsw-specific-sidebar-nav-item-active-accent': { light: CHAMPAGNE_DEEP, dark: CHAMPAGNE },
-  '--dsw-specific-input-major': { light: '#FFFFFF', dark: '#101216' },
-  '--dsw-specific-login-input': { light: '#F2EAE0', dark: '#0D0E11' },
-  '--dsw-specific-menu': { light: '#F0E9DC', dark: '#15171C' },
-  '--dsw-specific-selector': { light: '#F0E9DC', dark: '#1C1F25' },
-  '--dsw-specific-bubble': { light: '#F4EEE2', dark: '#121418' },
-  '--dsw-specific-bubble-highlight': { light: 'rgba(244, 210, 138, 0.24)', dark: '#1A1D22' },
-  '--dsw-specific-tip': { light: '#F0E9DC', dark: '#121418' },
-  '--dsw-alias-toast-bg': { light: '#4A3A1E', dark: '#1C1F25' },
-  '--dsw-alias-tooltip-bg': { light: '#2A241A', dark: '#15171C' },
+  '--dsw-specific-input-major': { light: '#FFFFFF', dark: 'rgba(16, 18, 22, 0.55)' },
+  '--dsw-specific-login-input': { light: '#F2EAE0', dark: 'rgba(13, 14, 17, 0.55)' },
+  '--dsw-specific-menu': { light: '#F0E9DC', dark: 'rgba(21, 23, 28, 0.60)' },
+  '--dsw-specific-selector': { light: '#F0E9DC', dark: 'rgba(28, 31, 37, 0.55)' },
+  '--dsw-specific-bubble': { light: '#F4EEE2', dark: 'rgba(18, 20, 24, 0.55)' },
+  '--dsw-specific-bubble-highlight': { light: 'rgba(244, 210, 138, 0.24)', dark: 'rgba(26, 29, 34, 0.55)' },
+  '--dsw-specific-tip': { light: '#F0E9DC', dark: 'rgba(18, 20, 24, 0.60)' },
+  '--dsw-alias-toast-bg': { light: '#4A3A1E', dark: 'rgba(28, 31, 37, 0.60)' },
+  '--dsw-alias-tooltip-bg': { light: '#2A241A', dark: 'rgba(21, 23, 28, 0.72)' },
 
   // Elevation shadows (warm-tinted depth with a champagne bloom).
   '--dsw-shadow-lv1': { light: '0 2px 4px rgba(60, 43, 17, 0.08)', dark: '0 2px 4px rgba(0, 0, 0, 0.5)' },
@@ -243,12 +252,18 @@ export interface MineradioSettings {
   fluidHue: number
   /** Fluid depth, 0-100 (0 = deep saturated, 100 = pale light, continuous). */
   fluidDepth: number
+  /** Glass dispersion tint hue, degrees (0-360, continuous). */
+  dispersionHue: number
+  /** Glass refraction strength, 0-100 (0 = none, 100 = strong). */
+  dispersionRefract: number
   /** Background brightness, 0-100 (0 = pure black, 50 = transparent, 100 = pure white). */
   bgBrightness: number
   /** Backdrop source: the living fluid board or a custom wallpaper. */
   background: 'fluid' | 'wallpaper'
   /** Wallpaper image data URL (empty until one is picked). */
   wallpaper: string
+  /** Auto-derive the accent hue from the wallpaper (spotlight/bloom/dispersion). */
+  autoTint: boolean
   /** Particle whale in the chat area center (opt-in extra; off by default —
    *  the Mineradio star river is the shipped particle stage). */
   whale: boolean
@@ -256,14 +271,24 @@ export interface MineradioSettings {
   critters: boolean
   /** Interactive mesh (the site's dot-grid with pointer repel). */
   mesh: boolean
+  /** Star-river particle density, 0-100 (50 = 1×, 100 = 2× the default field). */
+  starDensity: number
   /** Cursor spotlight glow that follows the pointer over the glass panes. */
   spotlight: boolean
   /** Hover press-down: the pane under the cursor sinks a touch (tactile depth). */
   press: boolean
+  /** Audio reactivity: the backdrop pulses with mic audio (fluid/stars/glow). */
+  audioReact: boolean
   /** Wallpaper blur radius, px. */
   wallpaperBlur: number
   /** Wallpaper frost veil, 0-100. */
   wallpaperFrost: number
+  /** Frosted-glass mask over the wallpaper (readability veil + stronger blur). */
+  wallpaperMask: boolean
+  /** Frost mask blur radius, px (0 = none, 40 = heavy frosted glass). */
+  wallpaperMaskBlur: number
+  /** Frost mask veil opacity, 0-100 (0 = clear, 100 = fully opaque scrim). */
+  wallpaperMaskOpacity: number
   /** Video wallpaper blur radius, px (0 = crisp, 40 = heavy acrylic). */
   videoBlur: number
   /** Video wallpaper brightness, 0-100 (100 = fully lit, 0 = deepest dim). */
@@ -278,15 +303,23 @@ const SETTINGS_DEFAULTS: MineradioSettings = {
   bgBrightness: 50,
   background: 'fluid',
   wallpaper: '',
+  autoTint: true,
   whale: false,
   critters: false,
   mesh: false,
+  starDensity: 60,
   spotlight: true,
   press: true,
+  audioReact: false,
   fluidHue: 44,
   fluidDepth: 22,
+  dispersionHue: 44,
+  dispersionRefract: 60,
   wallpaperBlur: 0,
   wallpaperFrost: 0,
+  wallpaperMask: false,
+  wallpaperMaskBlur: 24,
+  wallpaperMaskOpacity: 62,
   videoBlur: 6,
   videoBrightness: 45,
 }
@@ -297,9 +330,14 @@ const NUMERIC_KEYS = {
   frost: 'dsh.ui-mineradio.frost',
   fluidHue: 'dsh.ui-mineradio.fluidHue',
   fluidDepth: 'dsh.ui-mineradio.fluidDepth',
+  starDensity: 'dsh.ui-mineradio.starDensity',
+  dispersionHue: 'dsh.ui-mineradio.dispersionHue',
+  dispersionRefract: 'dsh.ui-mineradio.dispersionRefract',
   bgBrightness: 'dsh.ui-mineradio.bgBrightness',
   wallpaperBlur: 'dsh.ui-mineradio.wallpaperBlur',
   wallpaperFrost: 'dsh.ui-mineradio.wallpaperFrost',
+  wallpaperMaskBlur: 'dsh.ui-mineradio.wallpaperMaskBlur',
+  wallpaperMaskOpacity: 'dsh.ui-mineradio.wallpaperMaskOpacity',
   videoBlur: 'dsh.ui-mineradio.videoBlur',
   videoBrightness: 'dsh.ui-mineradio.videoBrightness',
 } as const
@@ -308,16 +346,19 @@ type NumericKey = keyof typeof NUMERIC_KEYS
 const MODE_KEY = 'dsh.ui-mineradio.mode'
 const BACKGROUND_KEY = 'dsh.ui-mineradio.background'
 const WALLPAPER_KEY = 'dsh.ui-mineradio.wallpaper'
+const AUTO_TINT_KEY = 'dsh.ui-mineradio.autoTint'
+const WALLPAPER_MASK_KEY = 'dsh.ui-mineradio.wallpaperMask'
 const WHALE_KEY = 'dsh.ui-mineradio.whale'
 const CRITTERS_KEY = 'dsh.ui-mineradio.critters'
 const MESH_KEY = 'dsh.ui-mineradio.mesh'
 const SPOTLIGHT_KEY = 'dsh.ui-mineradio.spotlight'
 const PRESS_KEY = 'dsh.ui-mineradio.press'
+const AUDIO_REACT_KEY = 'dsh.ui-mineradio.audioReact'
 
 /** Clamp a numeric knob into its sane range. */
 function clampSetting(key: NumericKey, value: number): number {
-  const max = key === 'blur' || key === 'wallpaperBlur' || key === 'videoBlur' ? 40
-    : key === 'frost' || key === 'wallpaperFrost' || key === 'bgBrightness' || key === 'videoBrightness' ? 100
+  const max = key === 'blur' || key === 'wallpaperBlur' || key === 'wallpaperMaskBlur' || key === 'videoBlur' ? 40
+    : key === 'frost' || key === 'wallpaperFrost' || key === 'wallpaperMaskOpacity' || key === 'starDensity' || key === 'bgBrightness' || key === 'videoBrightness' || key === 'dispersionRefract' ? 100
       : 360
   return Number.isFinite(value) ? Math.min(max, Math.max(0, value)) : SETTINGS_DEFAULTS[key]
 }
@@ -393,6 +434,44 @@ function readWallpaper(): string {
 function writeWallpaper(value: string): void {
   try {
     localStorage.setItem(WALLPAPER_KEY, value)
+  } catch {
+    /* in-memory state still applies for this tab */
+  }
+}
+
+/** Read the wallpaper auto-tint flag (absent means on). */
+function readAutoTint(): boolean {
+  try {
+    const raw = localStorage.getItem(AUTO_TINT_KEY)
+    return raw === null ? true : raw === 'true'
+  } catch {
+    return true
+  }
+}
+
+/** Persist the wallpaper auto-tint flag. */
+function writeAutoTint(value: boolean): void {
+  try {
+    localStorage.setItem(AUTO_TINT_KEY, String(value))
+  } catch {
+    /* in-memory state still applies for this tab */
+  }
+}
+
+/** Read the wallpaper frost-mask flag (absent means off). */
+function readWallpaperMask(): boolean {
+  try {
+    const raw = localStorage.getItem(WALLPAPER_MASK_KEY)
+    return raw === null ? false : raw === 'true'
+  } catch {
+    return false
+  }
+}
+
+/** Persist the wallpaper frost-mask flag. */
+function writeWallpaperMask(value: boolean): void {
+  try {
+    localStorage.setItem(WALLPAPER_MASK_KEY, String(value))
   } catch {
     /* in-memory state still applies for this tab */
   }
@@ -497,6 +576,25 @@ function writePress(value: boolean): void {
   }
 }
 
+/** Read the audio-reactivity flag (absent means off — mic access is opt-in). */
+function readAudioReact(): boolean {
+  try {
+    const raw = localStorage.getItem(AUDIO_REACT_KEY)
+    return raw === null ? false : raw === 'true'
+  } catch {
+    return false
+  }
+}
+
+/** Persist the audio-reactivity flag. */
+function writeAudioReact(value: boolean): void {
+  try {
+    localStorage.setItem(AUDIO_REACT_KEY, String(value))
+  } catch {
+    /* in-memory state still applies for this tab */
+  }
+}
+
 /** Current scheme from the presenter-owned body attribute. */
 function activeScheme(): 'light' | 'dark' {
   return document.body.hasAttribute('data-ds-dark-theme') ? 'dark' : 'light'
@@ -522,10 +620,18 @@ export class MineradioLayer {
   private whaleHandle: WhaleHandle | undefined
   private meshHandle: MeshHandle | undefined
   private starRiverHandle: StarRiverHandle | undefined
+  private audioHandle: AudioReactivityHandle | undefined
+  private cinemaDrift: CinemaDriftHandle | undefined
+  private dispersion: GlassDispersionHandle | undefined
+  private specularParallaxDisposer: (() => void) | undefined
   /** Object URL of the current large-video wallpaper (revoked on replace). */
   private videoObjectUrl: string | undefined
   /** IndexedDB id backing the current object URL (guards against reloads). */
   private videoBlobId: string | undefined
+  /** Extracted accent hue from the wallpaper (undefined until read). */
+  private extractedHue: number | undefined
+  /** Wallpaper source the extracted hue was computed from (guards re-reads). */
+  private extractedWallpaper: string | undefined
   private readonly ctx: Context
 
   /**
@@ -540,9 +646,9 @@ export class MineradioLayer {
           this.sync()
         }
         const key = event.key
-        if (key !== null && (key in NUMERIC_KEYS || key === BACKGROUND_KEY || key === WALLPAPER_KEY || key === MODE_KEY || key === WHALE_KEY || key === CRITTERS_KEY || key === MESH_KEY || key === SPOTLIGHT_KEY || key === PRESS_KEY)) {
+        if (key !== null && (key in NUMERIC_KEYS || key === BACKGROUND_KEY || key === WALLPAPER_KEY || key === AUTO_TINT_KEY || key === WALLPAPER_MASK_KEY || key === MODE_KEY || key === WHALE_KEY || key === CRITTERS_KEY || key === MESH_KEY || key === SPOTLIGHT_KEY || key === PRESS_KEY || key === AUDIO_REACT_KEY)) {
           this.reloadSettings()
-          if (this.enabled) { this.applySettings(); this.applyTokens(); this.applyFluidPalettes(); this.syncWhale() }
+          if (this.enabled) { this.applySettings(); this.applyTokens(); this.applyFluidPalettes(); this.syncWhale(); this.syncAudioReact() }
         }
       }
       window.addEventListener('storage', onStorage)
@@ -620,16 +726,24 @@ export class MineradioLayer {
       frost: readSetting('frost'),
       fluidHue: readSetting('fluidHue'),
       fluidDepth: readSetting('fluidDepth'),
+      starDensity: readSetting('starDensity'),
+      dispersionHue: readSetting('dispersionHue'),
+      dispersionRefract: readSetting('dispersionRefract'),
       bgBrightness: readSetting('bgBrightness'),
       background: readBackground(),
       wallpaper: readWallpaper(),
+      autoTint: readAutoTint(),
       whale: readWhale(),
       critters: readCritters(),
       mesh: readMesh(),
       spotlight: readSpotlight(),
       press: readPress(),
+      audioReact: readAudioReact(),
       wallpaperBlur: readSetting('wallpaperBlur'),
       wallpaperFrost: readSetting('wallpaperFrost'),
+      wallpaperMask: readWallpaperMask(),
+      wallpaperMaskBlur: readSetting('wallpaperMaskBlur'),
+      wallpaperMaskOpacity: readSetting('wallpaperMaskOpacity'),
       videoBlur: readSetting('videoBlur'),
       videoBrightness: readSetting('videoBrightness'),
     }
@@ -681,6 +795,24 @@ export class MineradioLayer {
     }
   }
 
+  /** Set the glass dispersion tint hue (degrees, continuous). */
+  setDispersionHue(value: number): void {
+    const next = clampSetting('dispersionHue', value)
+    if (next === this.settings.dispersionHue) return
+    this.settings.dispersionHue = next
+    writeSetting('dispersionHue', next)
+    if (this.enabled) this.dispersion?.setTint(this.dispersionTintHue())
+  }
+
+  /** Set the glass refraction strength (0-100). */
+  setDispersionRefract(value: number): void {
+    const next = clampSetting('dispersionRefract', value)
+    if (next === this.settings.dispersionRefract) return
+    this.settings.dispersionRefract = next
+    writeSetting('dispersionRefract', next)
+    if (this.enabled) this.dispersion?.setRefraction(next)
+  }
+
   /** Set the fluid depth (0-100, continuous: deep ↔ pale). */
   setFluidDepth(value: number): void {
     const next = clampSetting('fluidDepth', value)
@@ -724,6 +856,14 @@ export class MineradioLayer {
     if (this.enabled) this.applySettings()
   }
 
+  /** Set the wallpaper auto-tint flag (derive accent hues from the wallpaper). */
+  setAutoTint(value: boolean): void {
+    if (value === this.settings.autoTint) return
+    this.settings.autoTint = value
+    writeAutoTint(value)
+    if (this.enabled) this.applySettings()
+  }
+
   /** Set the particle-whale flag (chat-area center decoration). */
   setWhale(value: boolean): void {
     if (value === this.settings.whale) return
@@ -748,6 +888,15 @@ export class MineradioLayer {
     if (this.enabled) this.syncMesh()
   }
 
+  /** Set the star-river particle density (0-100). */
+  setStarDensity(value: number): void {
+    const next = clampSetting('starDensity', value)
+    if (next === this.settings.starDensity) return
+    this.settings.starDensity = next
+    writeSetting('starDensity', next)
+    this.starRiverHandle?.setDensity(next)
+  }
+
   /** Set the cursor-spotlight flag (pointer-tracking glass glow). */
   setSpotlight(value: boolean): void {
     if (value === this.settings.spotlight) return
@@ -762,6 +911,14 @@ export class MineradioLayer {
     this.settings.press = value
     writePress(value)
     if (this.enabled) this.applySettings()
+  }
+
+  /** Set the audio-reactivity flag (mic-driven backdrop pulse). */
+  setAudioReact(value: boolean): void {
+    if (value === this.settings.audioReact) return
+    this.settings.audioReact = value
+    writeAudioReact(value)
+    if (this.enabled) this.syncAudioReact()
   }
 
   /** Set the wallpaper blur radius (px). */
@@ -779,6 +936,32 @@ export class MineradioLayer {
     if (next === this.settings.wallpaperFrost) return
     this.settings.wallpaperFrost = next
     writeSetting('wallpaperFrost', next)
+    if (this.enabled) this.applySettings()
+  }
+
+  /** Set the wallpaper frost-mask flag (readability veil + stronger blur). */
+  setWallpaperMask(value: boolean): void {
+    if (value === this.settings.wallpaperMask) return
+    this.settings.wallpaperMask = value
+    writeWallpaperMask(value)
+    if (this.enabled) this.applySettings()
+  }
+
+  /** Set the frost-mask blur radius (px). */
+  setWallpaperMaskBlur(value: number): void {
+    const next = clampSetting('wallpaperMaskBlur', value)
+    if (next === this.settings.wallpaperMaskBlur) return
+    this.settings.wallpaperMaskBlur = next
+    writeSetting('wallpaperMaskBlur', next)
+    if (this.enabled) this.applySettings()
+  }
+
+  /** Set the frost-mask veil opacity (0-100). */
+  setWallpaperMaskOpacity(value: number): void {
+    const next = clampSetting('wallpaperMaskOpacity', value)
+    if (next === this.settings.wallpaperMaskOpacity) return
+    this.settings.wallpaperMaskOpacity = next
+    writeSetting('wallpaperMaskOpacity', next)
     if (this.enabled) this.applySettings()
   }
 
@@ -827,18 +1010,14 @@ export class MineradioLayer {
     style.setProperty('--dsh-aqua-frost', String(Math.min(this.settings.frost / 50, 1.4)))
     // The new-session button's frost rides the same knob, +20 points.
     style.setProperty('--dsh-aqua-surface-frost', String(Math.min((this.settings.frost + 20) / 50, 1.4)))
-    // The cursor glow follows the fluid tone — same hue as the bloom stops,
-    // so 色调 44 glows warm champagne gold while 180 runs mint.
-    const glowHue = ((this.settings.fluidHue + HUE_BASE) % 360 + 360) % 360
-    // The champagne-bloom hue drives the ambient gold behind the glass (CSS
-    // bloom variable in the stylesheet), scoped to amber→mint so the brand
-    // stays warm even when the fluid sweeps elsewhere.
-    style.setProperty('--dsh-aqua-bloom-h', String(((glowHue - 44) * 0.5 + 44 + 360) % 360))
-    style.setProperty('--dsh-aqua-spot-color', this.dark
-      ? `hsla(${glowHue}, 90%, 62%, 0.17)`
-      : `hsla(${glowHue}, 90%, 45%, 0.16)`)
+    // Accent hue: auto-extracted from the wallpaper when auto-tint is on and
+    // a wallpaper is active, otherwise the fluid tone (spotlight/bloom) and
+    // the dispersion knob.
+    this.applyAccentTint()
     style.setProperty('--dsh-aqua-wallpaper-blur', `${this.settings.wallpaperBlur}px`)
     style.setProperty('--dsh-aqua-wallpaper-frost', String(this.settings.wallpaperFrost / 100))
+    style.setProperty('--dsh-aqua-wallpaper-mask-blur', `${this.settings.wallpaperMaskBlur}px`)
+    style.setProperty('--dsh-aqua-wallpaper-mask-veil', String(this.settings.wallpaperMaskOpacity / 100))
     // Video wallpaper: blur rides the video's own filter; brightness drives
     // the scrim veil's alpha (100 = fully lit / no veil, 0 = deepest dim,
     // capped at 0.65 so the film never goes fully black).
@@ -881,6 +1060,9 @@ export class MineradioLayer {
     // video-mode readability rules (bubble plates) without touching the app.
     const wallpaperOn = this.settings.background === 'wallpaper' && wallpaper !== ''
     document.documentElement.toggleAttribute('data-dsh-aqua-wallpaper', wallpaperOn)
+    // Frost mask: readable frosted glass over the wallpaper (blur + veil) and
+    // the particle stage is silenced while it is on.
+    document.documentElement.toggleAttribute('data-dsh-aqua-wallpaper-mask', wallpaperOn && this.settings.wallpaperMask)
     if (wallpaperOn) {
       document.documentElement.setAttribute('data-dsh-aqua-media', isVideo ? 'video' : 'image')
     } else {
@@ -948,6 +1130,9 @@ export class MineradioLayer {
         video.load()
       }
     }
+
+    // Re-run wallpaper color extraction when the source changes.
+    this.ensureWallpaperTint()
   }
 
   /** The wallpaper plays as a plain <video> element (the browser's own
@@ -965,6 +1150,91 @@ export class MineradioLayer {
     })
   }
 
+  /** The hue driving the spotlight glow + ambient bloom right now. */
+  private accentHue(): number {
+    if (this.settings.autoTint && this.settings.background === 'wallpaper'
+      && this.settings.wallpaper !== '' && this.extractedHue !== undefined) {
+      return this.extractedHue
+    }
+    return ((this.settings.fluidHue + HUE_BASE) % 360 + 360) % 360
+  }
+
+  /** The dispersion edge-tint hue (auto-extracted, or the user's knob). */
+  private dispersionTintHue(): number {
+    if (this.settings.autoTint && this.settings.background === 'wallpaper'
+      && this.settings.wallpaper !== '' && this.extractedHue !== undefined) {
+      return this.extractedHue
+    }
+    return this.settings.dispersionHue
+  }
+
+  /** Write the hue-driven accent vars (spotlight glow + bloom + dispersion). */
+  private applyAccentTint(): void {
+    const glowHue = this.accentHue()
+    const style = document.documentElement.style
+    // The champagne-bloom hue drives the ambient gold behind the glass,
+    // scoped to amber→mint so the brand stays warm.
+    style.setProperty('--dsh-aqua-bloom-h', String(((glowHue - 44) * 0.5 + 44 + 360) % 360))
+    style.setProperty('--dsh-aqua-spot-color', this.dark
+      ? `hsla(${glowHue}, 90%, 62%, 0.17)`
+      : `hsla(${glowHue}, 90%, 45%, 0.16)`)
+    this.dispersion?.setTint(this.dispersionTintHue())
+  }
+
+  /** Kick off (or clear) wallpaper color extraction, guarded by source. */
+  private ensureWallpaperTint(): void {
+    const wallpaper = this.settings.wallpaper
+    const active = this.settings.autoTint && this.settings.background === 'wallpaper' && wallpaper !== ''
+    if (!active) {
+      if (this.extractedHue !== undefined || this.extractedWallpaper !== undefined) {
+        this.extractedHue = undefined
+        this.extractedWallpaper = undefined
+        this.applyAccentTint()
+      }
+      return
+    }
+    if (this.extractedWallpaper === wallpaper) return
+    this.extractedWallpaper = wallpaper
+    void this.extractWallpaperTint(wallpaper)
+  }
+
+  /** Extract the dominant hue and repaint the accents (async, guarded). */
+  private async extractWallpaperTint(wallpaper: string): Promise<void> {
+    const isVideo = wallpaper.startsWith('data:video/') || wallpaper.startsWith('idb:') || wallpaper.startsWith('fsa:')
+    const hue = isVideo ? await this.extractVideoHue() : await this.extractImageHue(wallpaper)
+    if (this.settings.wallpaper !== wallpaper) return // stale load
+    this.extractedHue = hue ?? undefined
+    this.applyAccentTint()
+  }
+
+  /** Draw a wallpaper image into the extractor. */
+  private extractImageHue(dataUrl: string): Promise<number | null> {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => resolve(extractDominantHue(img))
+      img.onerror = () => resolve(null)
+      img.src = dataUrl
+    })
+  }
+
+  /** Draw the wallpaper video's first available frame into the extractor. */
+  private extractVideoHue(): Promise<number | null> {
+    return new Promise((resolve) => {
+      const video = document.querySelector<HTMLVideoElement>('[data-dsh-aqua-wallpaper-video]')
+      if (video === null) {
+        resolve(null)
+        return
+      }
+      const draw = (): void => resolve(extractDominantHue(video))
+      if (video.readyState >= 2) {
+        draw()
+        return
+      }
+      video.addEventListener('loadeddata', draw, { once: true })
+      video.addEventListener('error', () => resolve(null), { once: true })
+    })
+  }
+
   /** Apply the mode's token layer (floating palette, or translucent compat). */
   private applyTokens(): void {
     this.tokenDisposer?.()
@@ -979,6 +1249,9 @@ export class MineradioLayer {
     ensureAmbientScene()
     ensurePageFades()
     this.syncStarRiver()
+    this.startCinemaDrift()
+    this.startGlassDispersion()
+    this.startSpecularParallax()
     this.applySettings()
     this.applyTokens()
     this.mountFluid()
@@ -986,6 +1259,7 @@ export class MineradioLayer {
     this.startSpotlightFeed()
     this.syncWhale()
     this.syncMesh()
+    this.syncAudioReact()
   }
 
   /** Mount the Mineradio star-river particle stage (always on with the layer:
@@ -995,7 +1269,33 @@ export class MineradioLayer {
     if (this.starRiverHandle !== undefined) return
     const ambient = document.querySelector<HTMLElement>('[data-dsh-aqua-ambient]')
     if (ambient === null) return
-    this.starRiverHandle = mountStarRiver(ambient, { dark: this.dark })
+    this.starRiverHandle = mountStarRiver(ambient, { dark: this.dark, density: this.settings.starDensity })
+  }
+
+  /** Start the cinematic camera drift over the fluid + star-river layers
+   *  (idempotent per mount; the subtle parallax "breathe" of the backdrop). */
+  private startCinemaDrift(): void {
+    if (!this.enabled) return
+    if (this.cinemaDrift !== undefined) return
+    const ambient = document.querySelector<HTMLElement>('[data-dsh-aqua-ambient]')
+    if (ambient === null) return
+    this.cinemaDrift = startCinemaDrift(ambient)
+  }
+
+  /** Start the glass chromatic-dispersion filter (idempotent per mount). */
+  private startGlassDispersion(): void {
+    if (!this.enabled) return
+    if (this.dispersion !== undefined) return
+    this.dispersion = startGlassDispersion()
+    this.dispersion.setTint(this.dispersionTintHue())
+    this.dispersion.setRefraction(this.settings.dispersionRefract)
+  }
+
+  /** Start the specular-highlight cursor parallax (idempotent per mount). */
+  private startSpecularParallax(): void {
+    if (!this.enabled) return
+    if (this.specularParallaxDisposer !== undefined) return
+    this.specularParallaxDisposer = startSpecularParallax()
   }
 
   /** Mount or drop the particle whale to match enabled + the whale flag. */
@@ -1024,11 +1324,51 @@ export class MineradioLayer {
     }
   }
 
+  /** Start or stop the mic audio feed to match enabled + the audioReact flag.
+   *  The feed routes bass → fluid, mids/highs → star river, and overall
+   *  loudness → a CSS var that lifts the spotlight glow. */
+  private syncAudioReact(): void {
+    const root = document.documentElement
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const shouldRun = this.enabled && this.settings.audioReact && !reducedMotion
+    if (shouldRun) {
+      if (this.audioHandle !== undefined) return
+      root.dataset.dshAquaAudioStatus = 'starting'
+      this.audioHandle = createAudioReactivity((env) => {
+        // Only the star particles pulse with the music — bass drives the hop,
+        // treble the sparkle. The fluid and spotlight glow stay audio-free.
+        this.starRiverHandle?.setAudio(env.low, env.high)
+        // Diagnostic: exposes the live envelope (low,high,volume) for DevTools.
+        root.dataset.dshAquaAudioEnv =
+          `${env.low.toFixed(2)},${env.high.toFixed(2)},${env.volume.toFixed(2)}`
+      })
+      void this.audioHandle.start().then((ok) => {
+        if (ok) {
+          root.dataset.dshAquaAudioStatus = 'running'
+        } else {
+          // Mic denied / no device: drop the inert handle so a re-toggle retries.
+          root.dataset.dshAquaAudioStatus = 'failed'
+          this.audioHandle?.dispose()
+          this.audioHandle = undefined
+        }
+      })
+    } else {
+      root.dataset.dshAquaAudioStatus = !this.enabled ? 'theme-off'
+        : !this.settings.audioReact ? 'toggle-off'
+          : 'reduced-motion'
+      this.audioHandle?.dispose()
+      this.audioHandle = undefined
+      root.style.removeProperty('--dsh-aqua-audio-glow')
+      delete root.dataset.dshAquaAudioEnv
+    }
+  }
+
   private unmount(): void {
     document.documentElement.removeAttribute(MINERADIO_ATTRIBUTE)
     document.documentElement.removeAttribute('data-dsh-float')
     document.documentElement.removeAttribute('data-dsh-compat')
     document.documentElement.removeAttribute('data-dsh-aqua-wallpaper')
+    document.documentElement.removeAttribute('data-dsh-aqua-wallpaper-mask')
     document.documentElement.removeAttribute('data-dsh-aqua-media')
     document.documentElement.removeAttribute(SPOTLIGHT_ATTRIBUTE)
     document.documentElement.removeAttribute(PRESS_ATTRIBUTE)
@@ -1036,10 +1376,21 @@ export class MineradioLayer {
     this.spotlightDisposer = undefined
     this.starRiverHandle?.dispose()
     this.starRiverHandle = undefined
+    this.cinemaDrift?.dispose()
+    this.cinemaDrift = undefined
+    this.dispersion?.dispose()
+    this.dispersion = undefined
+    this.specularParallaxDisposer?.()
+    this.specularParallaxDisposer = undefined
     this.whaleHandle?.dispose()
     this.whaleHandle = undefined
     this.meshHandle?.dispose()
     this.meshHandle = undefined
+    this.audioHandle?.dispose()
+    this.audioHandle = undefined
+    document.documentElement.style.removeProperty('--dsh-aqua-audio-glow')
+    delete document.documentElement.dataset.dshAquaAudioEnv
+    delete document.documentElement.dataset.dshAquaAudioStatus
     this.tokenDisposer?.()
     this.tokenDisposer = undefined
     if (this.videoObjectUrl !== undefined) {

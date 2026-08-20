@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-mineradio
+# dsh-theme-mineradio
 
 English | [中文](README.zh.md)
 
@@ -48,7 +48,7 @@ Then add a `ui-mineradio` entry manually to `$DSH_HOME/profiles/web/cordis.patch
 ```yaml
 - insert:
     - id: ui-mineradio
-      name: '@deepseek-ai/dsh-client-ui-mineradio'
+      name: 'dsh-theme-mineradio'
 ```
 
 Restart the web UI. To turn it off: Settings → Plugins → **Mineradio**.

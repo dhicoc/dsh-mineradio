@@ -1,13 +1,13 @@
 /**
- * Package-owned invariant companion for `@deepseek-ai/dsh-client-ui-mineradio`.
- * @module @deepseek-ai/dsh-client-ui-mineradio/invariant
+ * Package-owned invariant companion for `dsh-theme-mineradio`.
+ * @module dsh-theme-mineradio/invariant
  */
 
 /* jscpd:ignore-start */
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@deepseek-ai/dsh-client-ui-mineradio'
+const PACKAGE_NAME = 'dsh-theme-mineradio'
 
 /** Cordis companion plugin name. */
 export const name = 'client-ui-mineradio-invariant'

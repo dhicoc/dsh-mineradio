@@ -204,6 +204,61 @@
   color: var(--dsw-alias-state-business-primary);
 }
 
+/* Hue rainbow strip: label + a continuous hue gradient with a draggable
+ * colour thumb — a visible, pickable spectrum in place of the hue slider. */
+.hueStripRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hueStrip {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  height: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--dsw-alias-border-l2);
+  background: linear-gradient(
+    to right,
+    hsl(0, 85%, 55%),
+    hsl(60, 85%, 55%),
+    hsl(120, 85%, 55%),
+    hsl(180, 85%, 55%),
+    hsl(240, 85%, 55%),
+    hsl(300, 85%, 55%),
+    hsl(360, 85%, 55%)
+  );
+  cursor: pointer;
+  touch-action: none;
+}
+
+.hueStrip:focus-visible {
+  outline: 2px solid var(--dsw-alias-state-business-primary);
+  outline-offset: 2px;
+}
+
+.hueStripThumb {
+  position: absolute;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px var(--dsw-alias-border-l2), 0 1px 3px rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.hueStripValue {
+  flex: none;
+  width: 40px;
+  font-size: 12px;
+  line-height: 18px;
+  text-align: right;
+  color: var(--dsw-alias-label-tertiary);
+}
+
 /* Wallpaper picker: hidden file input + a ghost button. */
 .wallpaperPick {
   display: flex;

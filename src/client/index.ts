@@ -55,17 +55,25 @@ export function apply(ctx: ClientContext): void {
       frost: s.frost,
       fluidHue: s.fluidHue,
       fluidDepth: s.fluidDepth,
+      dispersionHue: s.dispersionHue,
+      dispersionRefract: s.dispersionRefract,
       bgBrightness: s.bgBrightness,
       dark: layer.getDark(),
       background: s.background,
       wallpaper: s.wallpaper,
+      autoTint: s.autoTint,
       whale: s.whale,
       critters: s.critters,
       mesh: s.mesh,
+      starDensity: s.starDensity,
       spotlight: s.spotlight,
       press: s.press,
+      audioReact: s.audioReact,
       wallpaperBlur: s.wallpaperBlur,
       wallpaperFrost: s.wallpaperFrost,
+      wallpaperMask: s.wallpaperMask,
+      wallpaperMaskBlur: s.wallpaperMaskBlur,
+      wallpaperMaskOpacity: s.wallpaperMaskOpacity,
       videoBlur: s.videoBlur,
       videoBrightness: s.videoBrightness,
     }
@@ -116,6 +124,14 @@ export function apply(ctx: ClientContext): void {
         layer.setFluidDepth(fluidDepth)
         sync()
       },
+      setDispersionHue: (dispersionHue) => {
+        layer.setDispersionHue(dispersionHue)
+        sync()
+      },
+      setDispersionRefract: (dispersionRefract) => {
+        layer.setDispersionRefract(dispersionRefract)
+        sync()
+      },
       setBgBrightness: (bgBrightness) => {
         layer.setBgBrightness(bgBrightness)
         sync()
@@ -126,6 +142,10 @@ export function apply(ctx: ClientContext): void {
       },
       setWallpaper: (wallpaper) => {
         layer.setWallpaper(wallpaper)
+        sync()
+      },
+      setAutoTint: (autoTint) => {
+        layer.setAutoTint(autoTint)
         sync()
       },
       setWhale: (whale) => {
@@ -140,6 +160,10 @@ export function apply(ctx: ClientContext): void {
         layer.setMesh(mesh)
         sync()
       },
+      setStarDensity: (starDensity) => {
+        layer.setStarDensity(starDensity)
+        sync()
+      },
       setSpotlight: (spotlight) => {
         layer.setSpotlight(spotlight)
         sync()
@@ -148,12 +172,28 @@ export function apply(ctx: ClientContext): void {
         layer.setPress(press)
         sync()
       },
+      setAudioReact: (audioReact) => {
+        layer.setAudioReact(audioReact)
+        sync()
+      },
       setWallpaperBlur: (wallpaperBlur) => {
         layer.setWallpaperBlur(wallpaperBlur)
         sync()
       },
       setWallpaperFrost: (wallpaperFrost) => {
         layer.setWallpaperFrost(wallpaperFrost)
+        sync()
+      },
+      setWallpaperMask: (wallpaperMask) => {
+        layer.setWallpaperMask(wallpaperMask)
+        sync()
+      },
+      setWallpaperMaskBlur: (wallpaperMaskBlur) => {
+        layer.setWallpaperMaskBlur(wallpaperMaskBlur)
+        sync()
+      },
+      setWallpaperMaskOpacity: (wallpaperMaskOpacity) => {
+        layer.setWallpaperMaskOpacity(wallpaperMaskOpacity)
         sync()
       },
       setVideoBlur: (videoBlur) => {
@@ -173,7 +213,7 @@ export function apply(ctx: ClientContext): void {
   // Master switch card in the Plugins configurable tab.
   ctx.slots.inject('settings.plugin.item', () => ctx.slots.register({
     name: 'settings.plugin.item',
-    id: 'mineradio',
+    key: 'mineradio',
     order: 5,
     store: pluginStore,
     locale: NS,
@@ -188,5 +228,5 @@ export function apply(ctx: ClientContext): void {
     store: appearanceStore,
     locale: NS,
     inject: appearanceInjected,
-  }, MineradioAppearanceRow))
+  }, MineradioAppearanceRow), { key: 'mineradio' })
 }

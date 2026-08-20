@@ -23,7 +23,7 @@ Copy-Item "$repo\tsconfig.json" "$mono\tsconfig.json" -Force
 Write-Host '[2/3] Bundling...'
 Push-Location 'D:\Hermes Work\deepseek-harness'
 try {
-    pnpm --filter @deepseek-ai/dsh-client-ui-mineradio run bundle
+    pnpm --filter dsh-theme-mineradio run bundle
     if ($LASTEXITCODE -ne 0) { throw "bundle failed (exit $LASTEXITCODE)" }
 } finally {
     Pop-Location

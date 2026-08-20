@@ -1,4 +1,4 @@
-# @deepseek-ai/dsh-client-ui-mineradio
+# dsh-theme-mineradio
 
 中文 | [English](README.md)
 
@@ -48,7 +48,7 @@ dsh plugin --profile web add https://github.com/dhicoc/dsh-mineradio
 ```yaml
 - insert:
     - id: ui-mineradio
-      name: '@deepseek-ai/dsh-client-ui-mineradio'
+      name: 'dsh-theme-mineradio'
 ```
 
 重启 Web UI。想要关闭：设置 → 插件 → **Mineradio**。

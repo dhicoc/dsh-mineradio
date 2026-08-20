@@ -60,3 +60,10 @@ export function fluidToneColors(dark: boolean, hue: number, depth: number): Flui
     color3: hsl(h, 0.25, 0.955),
   }
 }
+
+/** Vivid, fixed-lightness colour for a hue — used to fill the rainbow-strip
+ *  thumb so it always shows the picked colour in dark and light mode alike. */
+export function fluidHueSwatch(hue: number): string {
+  const h = (((hue % 360) + 360) % 360)
+  return hsl(h, 0.85, 0.55)
+}

@@ -78,11 +78,12 @@ function hoverGated(): boolean {
 /** Whether the tilt may run on this pane right now. */
 function tiltable(spot: HTMLElement): boolean {
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return false
-  // The settings overlay renders INSIDE the sidebar column: tilting the
-  // sidebar while the panel is open would re-anchor its fixed overlay into
-  // the column — so the sidebar pauses while a dialog exists (the keeper
-  // untraps it instantly the moment the panel mounts).
-  if (spot.matches('[class*="sidebarCol"]') && document.querySelector('[role="dialog"]') !== null) return false
+  // The sidebar NEVER tilts: its tooltips, dropdown menus and the settings
+  // overlay all render INSIDE the column, and a running transform would
+  // re-anchor those position:fixed overlays into the column (they clip under
+  // overflow:hidden and trap at the 260px column width). It keeps the glow;
+  // the geometric press is reserved for the hero glass panes.
+  if (spot.matches('[class*="sidebarCol"]')) return false
   return true
 }
 

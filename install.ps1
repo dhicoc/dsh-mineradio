@@ -27,7 +27,7 @@ $ErrorActionPreference = 'Stop'
 if (-not $DshHome) { $DshHome = Join-Path $env:USERPROFILE '.dsh' }
 if (-not (Test-Path $DshHome)) { throw "DSH home not found: $DshHome (override with -DshHome)" }
 
-$plugin      = '@deepseek-ai/dsh-client-ui-mineradio'
+$plugin      = 'dsh-theme-mineradio'
 $nodeModules = Join-Path $DshHome 'profiles\node_modules'
 $linkPath    = Join-Path $nodeModules $plugin
 $patchFile   = Join-Path $DshHome "profiles\$Profile\cordis.patch.yml"
@@ -125,7 +125,7 @@ Write-Host "[3/3] Registering in $patchFile" -ForegroundColor Cyan
 $entryText = @'
 - insert:
     - id: ui-mineradio
-      name: '@deepseek-ai/dsh-client-ui-mineradio'
+      name: 'dsh-theme-mineradio'
 '@
 if (-not (Test-Path $patchFile)) {
     Set-Content -Path $patchFile -Value ($entryText + "`n") -Encoding UTF8
