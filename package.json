@@ -7,7 +7,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/dhicoc/dsh-mineradio.git"
+    "url": "git+https://github.com/dhicoc/dsh-theme-mineradio.git"
   },
   "type": "module",
   "main": "lib/index.js",
@@ -29,6 +29,9 @@
     "./package.json": "./package.json"
   },
   "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "inject": [
         "@deepseek-ai/dsh-client-runtime",
@@ -75,6 +78,7 @@
     "react-dom": "^18.2.0"
   },
   "files": [
+    "cordis.patch.yml",
     "lib/index.js",
     "lib/invariant.js",
     "lib/client.js",

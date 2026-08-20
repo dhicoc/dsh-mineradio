@@ -1,0 +1,10 @@
+# dsh-theme-mineradio — bundle layer
+#
+# Registers the Mineradio glass theme as a DSH plugin. The client package
+# (dsh.client.inject in package.json) carries the actual Web-surface theme; this
+# patch is what makes `dsh plugin add` load it — the same `ui-mineradio`
+# insert the install docs previously asked users to add by hand.
+
+- insert:
+    - id: ui-mineradio
+      name: dsh-theme-mineradio
