@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.0.1 (2026-08-20)
+
+- **声明 `dsh.bundle` manifest**：新增 `cordis.patch.yml`（注册 `ui-mineradio`），并在 `package.json` 补充 `dsh.bundle.patch` 与 `files`，使主题可通过 `dsh plugin add` 一键安装，无需再手工往 `cordis.patch.yml` 里加补丁；同时修正 `repository` 指向改名后的仓库
+
 ## v2.0.0 (2026-08-20)
 
 - **氛围镜头（光标视差 + 3D 倾斜）**：流体板（远层）与星河粒子（近层）随光标分层跟随——近层平移约 2×、并带 `perspective` 下的 `rotateX/rotateY` 倾斜与轻微滚转，鼠标扫过时背景像被相机视角掠过，景深感立现；鼠标停下后回到低频正弦「呼吸」漂移。纯 CSS transform、单 rAF、GPU 合成，遵循 `prefers-reduced-motion` 静态化
