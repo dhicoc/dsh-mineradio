@@ -1,7 +1,7 @@
 # Mineradio installer (Windows) - no npm, no build, no account, no git required.
 #
 # One command (from any directory):
-#   powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/dhicoc/dsh-mineradio/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
+#   powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/dhicoc/dsh-theme-mineradio/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
 #
 # It does three things:
 #   1. get the repo (git clone, or plain zip download when git is missing)
@@ -15,7 +15,7 @@
 # one; pass a URL or local path to install another clone.
 
 param(
-    [string]$Source = 'https://github.com/dhicoc/dsh-mineradio',
+    [string]$Source = 'https://github.com/dhicoc/dsh-theme-mineradio',
     [string]$Version = 'latest',
     [string]$DshHome = $env:DSH_HOME,
     [string]$Profile = 'web'
@@ -49,7 +49,7 @@ if ($isRemote) {
     if ($ref -eq 'latest' -and $repoUrl -match '^https?://github\.com/([^/]+/[^/]+)') {
         $slug = $Matches[1]
         try {
-            $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/$slug/releases/latest" -Headers @{ 'User-Agent' = 'dsh-mineradio-installer' } -TimeoutSec 15
+            $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/$slug/releases/latest" -Headers @{ 'User-Agent' = 'dsh-theme-mineradio-installer' } -TimeoutSec 15
             if ($latest.tag_name) {
                 $ref = $latest.tag_name
                 $isTag = $true

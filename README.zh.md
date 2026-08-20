@@ -26,7 +26,7 @@
 ### Windows（一条命令）
 
 ```powershell
-powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/dhicoc/dsh-mineradio/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
+powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.com/dhicoc/dsh-theme-mineradio/raw/main/install.ps1' -OutFile install.ps1; .\install.ps1"
 ```
 
 默认安装**最新正式版**。无需 git——安装脚本会退回到普通 zip 下载。脚本会把插件链接进 profile 的 `node_modules`，并在 `cordis.patch.yml` 中注册 `ui-mineradio`（幂等，可重复执行）。刷新 Web UI 即为开启状态。
@@ -41,10 +41,10 @@ powershell -ExecutionPolicy Bypass -Command "Invoke-WebRequest 'https://github.c
 ### 手动 / 通过 pnpm
 
 ```powershell
-dsh plugin --profile web add https://github.com/dhicoc/dsh-mineradio
+dsh plugin --profile web add https://github.com/dhicoc/dsh-theme-mineradio
 ```
 
-然后在 `$DSH_HOME/profiles/web/cordis.patch.yml` 手动加一条 `ui-mineradio`：
+`dsh.bundle` manifest 会自动注册 `ui-mineradio`，无需手动补丁。（安装脚本对源码安装会写入这条等价条目：）
 
 ```yaml
 - insert:
