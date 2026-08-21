@@ -1042,6 +1042,20 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   backdrop-filter: blur(var(--dsh-aqua-blur, 22px));
 }
 
+/* ---------- dsh-better-sidebar (omdsh/DSH-better-sidebar) glass pantry ----------
+   The plugin is token-driven (`--dsw-alias-*`), so its panels already inherit the
+   translucent fill + champagne hairline; add the missing frosted backdrop-filter
+   and let the opaque workbench pane (which resolves to the opaque base token)
+   read through to the panel's frost instead of sitting as a solid slab. */
+[data-dsh-aqua] [data-dsh-panel-host] [class*='panel' i]:not([class*='Body' i]) {
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
+}
+/* "_pane" is a prefix of "_panel", so exclude panel/content/tab to hit only the
+   opaque workbench pane (not the translucent panel shell or its children). */
+[data-dsh-aqua] [data-dsh-panel-host] [class*='_pane']:not([class*='panel']):not([class*='Content']):not([class*='Tab']) {
+  background: transparent;
+}
+
 /* ---------- Reduced motion: keep the static look, drop every effect. ---------- */
 @media (prefers-reduced-motion: reduce) {
   [data-dsh-float] [data-phase='hero'],

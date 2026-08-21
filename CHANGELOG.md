@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- **dsh-better-sidebar 玻璃适配**：为 omdsh-dev/DSH-better-sidebar 插件补玻璃质感——它本身是 token 驱动（面板/标签栏已吃半透明 fill + 香槟描边），但缺 `backdrop-filter`、且工作区 pane 用了不透明 `--dsw-alias-bg-base`（实黑一块）；现给面板/底部面板补上磨砂模糊（跟随「玻璃模糊度」旋钮），并把工作区 pane 改成透明、透出面板磨砂，整个右栏工作台读作一块家族玻璃
+
 ## v2.0.1 (2026-08-20)
 
 - **声明 `dsh.bundle` manifest**：新增 `cordis.patch.yml`（注册 `ui-mineradio`），并在 `package.json` 补充 `dsh.bundle.patch` 与 `files`，使主题可通过 `dsh plugin add` 一键安装，无需再手工往 `cordis.patch.yml` 里加补丁；同时修正 `repository` 指向改名后的仓库
