@@ -3,6 +3,7 @@
 ## v2.0.1 (2026-08-20)
 
 - **声明 `dsh.bundle` manifest**：新增 `cordis.patch.yml`（注册 `ui-mineradio`），并在 `package.json` 补充 `dsh.bundle.patch` 与 `files`，使主题可通过 `dsh plugin add` 一键安装，无需再手工往 `cordis.patch.yml` 里加补丁；同时修正 `repository` 指向改名后的仓库
+- **模糊度/磨砂度覆盖更全**：之前「磨砂度」只控制主玻璃面板，一批「表面 token」小面（设置里的选择器/输入框/下拉菜单/代码块/tooltip 等）透明度是写死的 0.5~0.72，不跟旋钮；现把它们接到磨砂度（`color-mix(... calc(X% * var(--dsh-aqua-frost)) ...)`），磨砂度旋钮会同步缩放这些表面的不透明度。兼容模式的 menu/card/bubble/tooltip/panel 的模糊度也从写死 `12px` 改为跟「玻璃模糊度」旋钮（`blur(var(--dsh-aqua-blur))`）
 
 ## v2.0.0 (2026-08-20)
 

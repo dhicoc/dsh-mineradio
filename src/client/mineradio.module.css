@@ -1039,7 +1039,7 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
 [data-dsh-compat] [class*='panel'],
 [data-dsh-compat] [class*='popover'],
 [data-dsh-compat] [class*='dropdown'] {
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px));
 }
 
 /* ---------- Reduced motion: keep the static look, drop every effect. ---------- */
