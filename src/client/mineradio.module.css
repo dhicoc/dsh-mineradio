@@ -698,6 +698,15 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   transition: margin 150ms var(--ds-ease-in-out), border-radius 150ms var(--ds-ease-in-out), transform 0.1s ease-out;
 }
 
+/* Collapsed rail (dark): the 56px column amplifies the wide-pane teal catch-light
+   (radial at 88% 8%) into a hot green right edge that clashes with the warm chat;
+   flatten to a quieter veil and dim the specular rim so it reads as one family. */
+[data-dsh-float] body[data-ds-dark-theme] [data-dsh-frame][data-sidebar-collapsed] [class*='sidebarCol'] {
+  background: linear-gradient(168deg, rgb(0 245 212 / 0.045), rgb(12 13 18 / 0.72) 46%, rgb(2 3 5 / 0.68));
+  border-color: rgba(255, 255, 255, 0.10);
+  border-top-color: rgba(255, 255, 255, 0.22);
+}
+
 /* The sidebar root freezes at the expanded column width via an inline
    style (the collapse crossfade needs it) —release it so the content
    follows the glass panel's width instead of overflowing its right edge.
