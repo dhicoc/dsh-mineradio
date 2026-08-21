@@ -1032,6 +1032,17 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) url(#mineradio-glass-dispersion-tall) saturate(1.22) brightness(1.04);
 }
 
+/* The collapsed rail EXEMPTS itself from the dispersion: the displacement
+   map pulls its edge samples ±30px outside the pane, and on the 56px rail
+   that drags the brighter chat-side fluid under the right edge (a hot 7px
+   band) while the champagne edge tint screen-blends over the step — the
+   same narrow-column amplification the flattened rail gradient above
+   fixes. Plain frost keeps the rail in the glass family; the wide panes
+   (header/composer/expanded sidebar) keep their refraction. */
+[data-dsh-float][data-dsh-dispersion] [data-dsh-frame][data-sidebar-collapsed] [class*='sidebarCol']::before {
+  backdrop-filter: blur(var(--dsh-aqua-blur, 22px)) saturate(1.22) brightness(1.04);
+}
+
 /* ---------- Compatibility mode: stock layout, generic glass material.
    The layout rules above are gated on data-dsh-float, so in compat mode the
    stock layout stays byte-for-byte. The translucent surface fill comes from
