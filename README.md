@@ -5,6 +5,18 @@ English | [中文](README.zh.md)
 
 **Mineradio** is a cinematic glassmorphism theme for the DeepSeek Harness web UI — a faithful re-skin of the Mineradio "private visual radio" identity. The header, sidebar, composer, stats line, and trajectory view become panes of warm champagne glass over a near-black studio backdrop. You can put a video as wallpaper and switch it off and the stock UI comes back exactly, with no source changes to DSH itself.
 
+## Preview
+
+See the theme without installing anything — an interactive, self-contained preview (dark / light switch, collapsible sidebar):
+
+**https://dhicoc.github.io/dsh-theme-mineradio/**
+
+![Mineradio — champagne glass over a near-black studio](assets/preview-dark.png)
+
+> The live link runs GitHub Pages from `docs/`. If it isn't up yet, open
+> `docs/index.html` directly in any browser — it works completely offline
+> (no build, no dependencies).
+
 ## What ports from Mineradio
 
 - **Champagne-gold identity** — the signature palette (`#f4d28a` champagne, `#7ad7c2` mint, `#ff5367` ember rose over a warm near-black `#08090B`) drives every alias token: surfaces, hairline strokes, text ink, buttons, scrollbars, and warm-tinted shadows with a gold bloom.
