@@ -946,6 +946,28 @@ html[data-dsh-float][data-dsh-aqua-wallpaper][data-dsh-aqua-media='video'] body[
   background: rgba(154, 111, 44, 0.35);
 }
 
+/* ---------- Native <select> popups: the OS-drawn option list. The stock
+   inputs paint a TRANSLUCENT surface-token fill and the option rows
+   inherit the ink colour but no background — on Windows Chromium the
+   popup's self-drawn rows collapse that transparent background into a
+   pale slab, leaving the inherited light ink unreadable (light mode
+   invertedly so: dark ink over a dark plate). Give every option/optgroup
+   an OPAQUE plate plus a matching ink so the popup reads like the menu
+   surface family in both schemes. These are the only properties Windows
+   Chromium honours on the native popup; the hover/selected highlight
+   stays system-drawn. ---------- */
+[data-dsh-aqua] select option,
+[data-dsh-aqua] select optgroup {
+  background-color: #FFFFFF;
+  color: #2A241A;
+}
+
+[data-dsh-aqua] body[data-ds-dark-theme] select option,
+[data-dsh-aqua] body[data-ds-dark-theme] select optgroup {
+  background-color: #16181D;
+  color: #F2F0EA;
+}
+
 /* ---------- Display typography: the serif face marks headings and the
    session tree, so the page reads in two voices —serif headings over the
    sans body. Space Grotesk keeps Latin/digits in the same stack. ---------- */
