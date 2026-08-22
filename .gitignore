@@ -9,6 +9,6 @@ build-tools/package.json
 build-tools/package-lock.json
 # screenshots / local test artifacts
 *.png
-!assets/*.png
+!docs/*.png
 *.log
 .gstack/

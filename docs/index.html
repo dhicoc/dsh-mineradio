@@ -3,574 +3,112 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mineradio — DeepSeek Harness 主题预览</title>
-<meta name="description" content="Mineradio 玻璃拟态主题的在线预览：香槟金玻璃、影院辉光、流体背景。为 DeepSeek Harness Web UI 打造。">
+<title>Mineradio — DeepSeek Harness 主题截图</title>
+<meta name="description" content="Mineradio 主题在 DeepSeek Harness Web UI 上的真实界面截图：香槟金玻璃、影院辉光、流体背景。">
 <style>
-/* ============================================================
-   Mineradio — live preview. Self-contained, no build, no deps.
-   Tokens ported 1:1 from src/client/theme-layer.ts +
-   src/client/mineradio.module.css (the shipped skin).
-   ============================================================ */
-
-:root {
-  --champagne: #f4d28a;
-  --champagne-deep: #9a6f2c;
-  --mint: #7ad7c2;
-  --rose: #ff5367;
-  --ink: #08090b;
-  --paper: #0e1014;
-
-  --blur: 22px;
-  --radius: 20px;
-  --ease: cubic-bezier(.4,0,.2,1);
-}
-
-/* ---------- dark scheme (the shipped near-black studio) ---------- */
-body[data-theme="dark"] {
-  --base: #08090b;
-  --ink-1: #f2f0ea;
-  --ink-2: #cbc4b8;
-  --ink-3: #98917f;
-  --ink-dim: #5a564c;
-
-  --glass:
-    radial-gradient(circle at 16% 0%, rgba(255,255,255,.10), transparent 34%),
-    radial-gradient(circle at 88% 8%, rgba(0,245,212,.12), transparent 36%),
-    linear-gradient(145deg, rgba(0,245,212,.115), rgba(12,13,18,.70) 42%, rgba(2,3,5,.66));
-
-  --glass-flat: linear-gradient(168deg, rgba(0,245,212,.045), rgba(12,13,18,.72) 46%, rgba(2,3,5,.68));
-
-  --rim:
-    inset 0 0 0 1px rgba(255,255,255,.13),
-    inset 0 1px 0 rgba(255,255,255,.22),
-    inset 0 -1px 0 rgba(255,255,255,.03),
-    0 22px 64px rgba(0,0,0,.30),
-    0 0 34px rgba(0,245,212,.052),
-    inset 0 -24px 58px rgba(0,0,0,.16);
-
-  --border: rgba(255,255,255,.16);
-  --border-top: rgba(255,255,255,.30);
-  --hairline: rgba(244,210,138,.09);
-  --hairline-2: rgba(244,210,138,.16);
-  --accent-fill: #f4d28a;
-  --accent-ink: #15171c;
-  --hover: rgba(244,210,138,.10);
-  --active: rgba(26,29,34,.55);
-
-  --backdrop:
-    radial-gradient(760px 420px at 50% -8%, rgba(0,245,212,.07), transparent 70%),
-    linear-gradient(180deg, rgba(36,66,255,.08) 0%, rgba(36,66,255,0) 46%),
-    radial-gradient(900px 420px at 50% 108%, rgba(244,210,138,.06), transparent 70%);
-
-  --blob-a: rgba(244,210,138,.16);
-  --blob-b: rgba(122,215,194,.13);
-  --blob-c: rgba(0,245,212,.10);
-}
-
-/* ---------- light scheme (warm paper) ---------- */
-body[data-theme="light"] {
-  --base: #f7f3ea;
-  --ink-1: #2a241a;
-  --ink-2: #5c5240;
-  --ink-3: #7a6f5a;
-  --ink-dim: #c8bfab;
-
-  --glass:
-    radial-gradient(circle at 16% 0%, rgba(255,255,255,.22), transparent 34%),
-    radial-gradient(circle at 88% 8%, rgba(154,111,44,.10), transparent 36%),
-    linear-gradient(145deg, rgba(244,210,138,.10), rgba(250,246,238,.58) 42%, rgba(244,240,232,.64));
-
-  --glass-flat: linear-gradient(168deg, rgba(244,210,138,.06), rgba(250,246,238,.60) 46%, rgba(244,240,232,.62));
-
-  --rim:
-    inset 0 0 0 1px rgba(255,255,255,.30),
-    inset 0 1px 0 rgba(255,255,255,.70),
-    inset 0 -1px 0 rgba(255,255,255,.14),
-    0 22px 64px rgba(60,43,17,.16),
-    0 0 34px rgba(244,210,138,.10);
-
-  --border: rgba(154,111,44,.22);
-  --border-top: rgba(154,111,44,.28);
-  --hairline: rgba(154,111,44,.12);
-  --hairline-2: rgba(154,111,44,.18);
-  --accent-fill: #9a6f2c;
-  --accent-ink: #ffffff;
-  --hover: rgba(154,111,44,.10);
-  --active: rgba(244,210,138,.26);
-
-  --backdrop:
-    radial-gradient(760px 420px at 50% -8%, rgba(244,210,138,.14), transparent 70%),
-    linear-gradient(180deg, rgba(214,196,160,.12) 0%, rgba(214,196,160,0) 38%),
-    radial-gradient(900px 420px at 50% 108%, rgba(122,215,194,.12), transparent 70%);
-
-  --blob-a: rgba(244,210,138,.28);
-  --blob-b: rgba(122,215,194,.22);
-  --blob-c: rgba(154,111,44,.14);
-}
-
-* { box-sizing: border-box; }
-
-html, body { height: 100%; margin: 0; }
-
-body {
-  font-family: "Inter", "Noto Sans SC", system-ui, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
-  background: var(--base);
-  color: var(--ink-1);
-  -webkit-font-smoothing: antialiased;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* ---------- ambient backdrop (fluid approximation) ---------- */
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: var(--backdrop);
-  z-index: 0;
-  pointer-events: none;
-}
-.backdrop::before,
-.backdrop::after {
-  content: "";
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(90px);
-  will-change: transform;
-}
-.backdrop::before {
-  width: 520px; height: 420px;
-  left: 8%; top: 18%;
-  background: radial-gradient(circle, var(--blob-a), transparent 68%);
-  animation: drift-a 26s var(--ease) infinite alternate;
-}
-.backdrop::after {
-  width: 620px; height: 500px;
-  right: 4%; bottom: -8%;
-  background: radial-gradient(circle, var(--blob-b), transparent 68%);
-  animation: drift-b 32s var(--ease) infinite alternate;
-}
-.backdrop .blob-c {
-  position: absolute;
-  width: 460px; height: 460px;
-  left: 44%; top: 40%;
-  border-radius: 50%;
-  filter: blur(100px);
-  background: radial-gradient(circle, var(--blob-c), transparent 68%);
-  animation: drift-c 38s var(--ease) infinite alternate;
-}
-@keyframes drift-a { to { transform: translate(60px, 40px) scale(1.08); } }
-@keyframes drift-b { to { transform: translate(-70px, -30px) scale(1.1); } }
-@keyframes drift-c { to { transform: translate(-40px, 60px) scale(.95); } }
-@media (prefers-reduced-motion: reduce) {
-  .backdrop::before, .backdrop::after, .backdrop .blob-c { animation: none; }
-}
-
-/* ---------- top control bar ---------- */
-.topbar {
-  position: relative;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-}
-.topbar .title {
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  font-size: 15px;
-  font-weight: 650;
-  letter-spacing: .02em;
-}
-.topbar .title svg { flex: none; }
-.topbar .spacer { flex: 1; }
-.topbar .hint { font-size: 12px; color: var(--ink-3); }
-.pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: 550;
-  color: var(--ink-1);
-  background: var(--glass-flat);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  cursor: pointer;
-  backdrop-filter: blur(var(--blur)) saturate(1.22) brightness(1.04);
-  transition: background .18s var(--ease), border-color .18s var(--ease), transform .1s ease;
-}
-.pill:hover { border-color: var(--border-top); }
-.pill:active { transform: scale(.985); }
-.pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--champagne); box-shadow: 0 0 8px rgba(244,210,138,.8); }
-
-/* ---------- stage / app window ---------- */
-.stage {
-  position: relative;
-  z-index: 1;
-  flex: 1;
-  min-height: 0;
-  padding: 0 18px 18px;
-}
-.app {
-  height: 100%;
-  display: grid;
-  grid-template-columns: 260px minmax(0,1fr);
-  gap: 12px;
-}
-
-/* shared glass recipe */
-.glass {
-  position: relative;
-  border-radius: var(--radius);
-  background: var(--glass);
-  box-shadow: var(--rim);
-  border: 1px solid var(--border);
-  border-top-color: var(--border-top);
-  overflow: hidden;
-}
-.glass::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  backdrop-filter: blur(var(--blur)) saturate(1.22) brightness(1.04);
-  pointer-events: none;
-  z-index: 0;
-}
-.glass > * { position: relative; z-index: 1; }
-
-/* ---------- sidebar ---------- */
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  padding: 12px;
-  transition: width .25s var(--ease);
-}
-.sidebar.collapsed { width: 0; padding: 12px 0; border: none; background: none; box-shadow: none; }
-.sidebar.collapsed > * { opacity: 0; pointer-events: none; }
-.sidebar .brand {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 16px;
-  font-weight: 650;
-  letter-spacing: .02em;
-  padding: 8px 8px 6px;
-}
-.sidebar .brand svg { flex: none; }
-.new-session {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  margin: 8px 2px 12px;
-  border-radius: 12px;
-  font-size: 13.5px;
-  font-weight: 550;
-  color: var(--ink-1);
-  background: var(--glass-flat);
-  border: 1px solid var(--hairline-2);
-  cursor: default;
-}
-.sidebar .label {
-  font-size: 11px;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-  padding: 0 8px 6px;
-}
-.session {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 9px;
-  border-radius: 10px;
-  font-size: 13px;
-  color: var(--ink-2);
-  font-family: "Georgia", "Songti SC", "Noto Serif SC", serif;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.session.active {
-  background: var(--active);
-  color: var(--ink-1);
-  box-shadow: inset 2px 0 0 var(--accent-fill);
-}
-.session .ring { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--ink-3); flex: none; }
-.session.active .ring { border-color: var(--champagne); background: var(--champagne); box-shadow: 0 0 8px rgba(244,210,138,.7); }
-.sidebar .grow { flex: 1; }
-.sidebar .foot {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border-top: 1px solid var(--hairline);
-  color: var(--ink-2);
-  font-size: 12.5px;
-}
-
-/* ---------- main content ---------- */
-.content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-.header-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-}
-.header-card .crumb { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
-.header-card .crumb .tag {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--accent-ink);
-  background: var(--accent-fill);
-  border-radius: 6px;
-  padding: 2px 7px;
-}
-.header-card .spacer { flex: 1; }
-.header-card .chip {
-  font-size: 12px;
-  color: var(--ink-2);
-  padding: 4px 10px;
-  border: 1px solid var(--hairline-2);
-  border-radius: 999px;
-}
-
-/* hero / composer */
-.hero {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0 60px;
-}
-.wordmark {
-  text-align: center;
-  margin-bottom: 26px;
-  font-size: 30px;
-  font-weight: 700;
-  letter-spacing: .04em;
-  background: linear-gradient(120deg, var(--ink-1), var(--champagne));
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-}
-.wordmark-sub {
-  margin-top: 6px;
-  font-size: 13px;
-  color: var(--ink-3);
-  font-weight: 400;
-}
-.composer-wrap { max-width: 720px; margin: 0 auto; width: 100%; }
-.composer-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 12px 16px;
-  border-radius: 24px;
-}
-.composer-card textarea {
-  width: 100%;
-  resize: none;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--ink-1);
-  font: inherit;
-  font-size: 14px;
-  line-height: 1.6;
-  min-height: 46px;
-}
-.composer-card textarea::placeholder { color: var(--ink-3); opacity: .85; }
-.composer-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.composer-actions .icon {
-  width: 30px; height: 30px;
-  display: grid; place-items: center;
-  border-radius: 10px;
-  color: var(--ink-2);
-  border: 1px solid transparent;
-}
-.composer-actions .spacer { flex: 1; }
-.send {
-  height: 34px;
-  padding: 0 16px;
-  border: none;
-  border-radius: 17px;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--accent-ink);
-  background: var(--accent-fill);
-  cursor: default;
-}
-
-/* stats line — the fused slab */
-.stats {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 16px;
-  margin: 0 24px;
-  border: 1px solid var(--hairline);
-  border-top: none;
-  border-radius: 0 0 24px 24px;
-  background: var(--glass);
-  box-shadow: var(--rim);
-  font-size: 12px;
-  color: var(--ink-2);
-}
-.stats b { color: var(--ink-1); font-weight: 600; }
-
-/* ---------- hints / footer ---------- */
-.note {
-  position: fixed;
-  right: 18px;
-  bottom: 12px;
-  z-index: 2;
-  font-size: 11.5px;
-  color: var(--ink-dim);
-  display: flex;
-  gap: 14px;
-}
-.note a { color: var(--champagne-deep); text-decoration: none; }
-body[data-theme="dark"] .note a { color: var(--champagne); }
-
-@media (max-width: 720px) {
-  .app { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-  .hero { padding: 0 16px; }
-}
+  :root {
+    --base: #08090b;
+    --ink: #f2f0ea;
+    --ink-2: #cbc4b8;
+    --ink-3: #98917f;
+    --champagne: #f4d28a;
+    --line: rgba(244, 210, 138, .12);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Inter", "Noto Sans SC", system-ui, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    background:
+      radial-gradient(760px 420px at 50% -8%, rgba(244, 210, 138, .08), transparent 70%),
+      linear-gradient(180deg, rgba(0, 245, 212, .05), transparent 40%),
+      var(--base);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 48px 24px 72px; }
+  header { text-align: center; margin-bottom: 40px; }
+  header .mark {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-size: 22px; font-weight: 700; letter-spacing: .03em;
+  }
+  header .mark svg { flex: none; }
+  header .tag {
+    display: inline-block; margin-top: 10px;
+    font-size: 13px; color: var(--champagne); opacity: .9;
+    letter-spacing: .04em;
+  }
+  header .col {
+    margin-top: 8px; font-size: 13px; color: var(--ink-3);
+  }
+  .grid { display: flex; flex-direction: column; gap: 28px; }
+  figure { margin: 0; }
+  figure a { display: block; line-height: 0; }
+  figure img {
+    width: 100%; height: auto;
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, .45), 0 0 34px rgba(244, 210, 138, .05);
+    transition: transform .18s ease, box-shadow .18s ease;
+  }
+  figure a:hover img { transform: translateY(-3px); box-shadow: 0 30px 72px rgba(0,0,0,.55), 0 0 40px rgba(244,210,138,.10); }
+  figcaption {
+    margin-top: 12px; font-size: 13.5px; color: var(--ink-2);
+    display: flex; align-items: baseline; gap: 8px;
+  }
+  figcaption b { color: var(--ink); font-weight: 620; }
+  figcaption .exp { color: var(--ink-3); font-size: 12px; }
+  footer {
+    margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--line);
+    text-align: center; font-size: 12.5px; color: var(--ink-3);
+  }
+  footer a { color: var(--champagne); text-decoration: none; }
+  @media (max-width: 720px) {
+    .wrap { padding: 32px 14px 56px; }
+  }
 </style>
 </head>
-<body data-theme="dark">
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <circle cx="12" cy="12" r="9.5" stroke="#f4d28a" stroke-width="1.4"/>
+        <circle cx="12" cy="12" r="4" stroke="#f4d28a" stroke-width="1.4"/>
+        <circle cx="12" cy="12" r="1.4" fill="#f4d28a"/>
+      </svg>
+      Mineradio
+    </div>
+    <div class="tag">主题截图 · DeepSeek Harness Web UI</div>
+    <div class="col">香槟金玻璃 · 影院辉光 · 流体背景（实机截图，点击可查看原图）</div>
+  </header>
 
-<div class="backdrop"><div class="blob-c"></div></div>
+  <div class="grid">
+    <figure>
+      <a href="screenshot-dark.png" target="_blank" rel="noreferrer">
+        <img src="screenshot-dark.png" alt="Mineradio 深色模式主界面" loading="lazy">
+      </a>
+      <figcaption><b>深色模式</b><span class="exp">近黑演播室上的香槟金玻璃，云母悬浮卡片</span></figcaption>
+    </figure>
 
-<div class="topbar">
-  <span class="title">
-    <!-- radio/record mark -->
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="12" cy="12" r="9.5" stroke="#f4d28a" stroke-width="1.4"/>
-      <circle cx="12" cy="12" r="4" stroke="#f4d28a" stroke-width="1.4"/>
-      <circle cx="12" cy="12" r="1.4" fill="#f4d28a"/>
-    </svg>
-    Mineradio <span style="color:var(--ink-3);font-weight:400">· 主题预览</span>
-  </span>
-  <span class="spacer"></span>
-  <span class="hint">香槟金玻璃 · 影院辉光 · 流体背景</span>
-  <button class="pill" id="modeToggle" title="切换深浅色"><span class="dot"></span><span id="modeLabel">暗色</span></button>
-  <button class="pill" id="collapseToggle" title="收起侧栏">侧栏</button>
-</div>
+    <figure>
+      <a href="screenshot-light.png" target="_blank" rel="noreferrer">
+        <img src="screenshot-light.png" alt="Mineradio 浅色模式主界面" loading="lazy">
+      </a>
+      <figcaption><b>浅色模式</b><span class="exp">暖纸白底 + 香槟描边</span></figcaption>
+    </figure>
 
-<main class="stage">
-  <div class="app">
-
-    <aside class="sidebar glass" id="sidebar">
-      <div class="brand">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="9.5" stroke="#f4d28a" stroke-width="1.5"/>
-          <circle cx="12" cy="12" r="3.6" stroke="#f4d28a" stroke-width="1.5"/>
-          <circle cx="12" cy="12" r="1.3" fill="#f4d28a"/>
-        </svg>
-        Mineradio
-      </div>
-      <div class="new-session">＋ 新建会话</div>
-      <div class="label">会话</div>
-      <div class="session active"><span class="ring"></span>玻璃色散与液态高光</div>
-      <div class="session"><span class="ring"></span>实机主题预览上线</div>
-      <div class="session"><span class="ring"></span>侧栏亮边修复记录</div>
-      <div class="session"><span class="ring"></span>调色板调校笔记</div>
-      <div class="grow"></div>
-      <div class="foot">⚙ 设置</div>
-    </aside>
-
-    <section class="content">
-      <div class="header-card glass">
-        <span class="crumb"><span class="tag">Mineradio</span> DeepSeek Harness</span>
-        <span class="spacer"></span>
-        <span class="chip">GLM 5.3</span>
-        <span class="chip">云母模式</span>
-      </div>
-
-      <div class="hero">
-        <div>
-          <div class="wordmark">Mineradio</div>
-          <div class="wordmark-sub">私人视觉电台 · 影院级玻璃拟态</div>
-        </div>
-        <div class="composer-wrap">
-          <div class="composer-card glass">
-            <textarea placeholder="向 Mineradio 提问……（这是预览，不可输入）"></textarea>
-            <div class="composer-actions">
-              <span class="icon">＋</span>
-              <span class="icon">🔍</span>
-              <span class="spacer"></span>
-              <button class="send">发送</button>
-            </div>
-          </div>
-          <div class="stats">
-            <span><b>champagne</b> #f4d28a</span>&nbsp;·&nbsp;
-            <span><b>mint</b> #7ad7c2</span>&nbsp;·&nbsp;
-            <span><b>rose</b> #ff5367</span>&nbsp;·&nbsp;
-            <span>玻璃模糊 <b>22px</b></span>
-          </div>
-        </div>
-      </div>
-    </section>
-
+    <figure>
+      <a href="screenshot-settings-dark.png" target="_blank" rel="noreferrer">
+        <img src="screenshot-settings-dark.png" alt="Mineradio 深色模式设置面板" loading="lazy">
+      </a>
+      <figcaption><b>设置面板</b><span class="exp">玻璃弹窗、外观/模糊/磨砂/背景等控件均已适配</span></figcaption>
+    </figure>
   </div>
-</main>
 
-<div class="note">
-  <span>Mineradio theme · self-contained preview</span>
-  <a href="https://github.com/dhicoc/dsh-theme-mineradio" target="_blank" rel="noreferrer">github.com/dhicoc/dsh-theme-mineradio</a>
+  <footer>
+    Mineradio theme · <a href="https://github.com/dhicoc/dsh-theme-mineradio" target="_blank" rel="noreferrer">github.com/dhicoc/dsh-theme-mineradio</a>
+  </footer>
 </div>
-
-<script>
-  const body = document.body;
-  const modeToggle = document.getElementById('modeToggle');
-  const modeLabel = document.getElementById('modeLabel');
-  const collapseToggle = document.getElementById('collapseToggle');
-  const sidebar = document.getElementById('sidebar');
-
-  function applyMode(mode) {
-    body.setAttribute('data-theme', mode);
-    modeLabel.textContent = mode === 'dark' ? '暗色' : '浅色';
-    try { localStorage.setItem('mineradio-preview-theme', mode); } catch (e) {}
-  }
-
-  (function init() {
-    let saved = null;
-    try { saved = localStorage.getItem('mineradio-preview-theme'); } catch (e) {}
-    if (saved === 'light' || saved === 'dark') applyMode(saved);
-    else {
-      const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-      applyMode(prefersLight ? 'light' : 'dark');
-    }
-  })();
-
-  modeToggle.addEventListener('click', () => {
-    applyMode(body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
-  });
-
-  collapseToggle.addEventListener('click', () => {
-    sidebar.classList.toggle('collapsed');
-  });
-</script>
 </body>
 </html>
