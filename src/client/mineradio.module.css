@@ -34,7 +34,12 @@
   --dsh-aqua-glass-card-dark:
     radial-gradient(circle at 16% 0%, rgb(255 255 255 / calc(0.10 * var(--dsh-aqua-frost, 1))), transparent 34%),
     radial-gradient(circle at 88% 8%, rgb(0 245 212 / calc(0.12 * var(--dsh-aqua-frost, 1))), transparent 36%),
-    linear-gradient(145deg, rgb(0 245 212 / calc(0.115 * var(--dsh-aqua-frost, 1))), rgb(12 13 18 / calc(0.70 * var(--dsh-aqua-frost, 1))) 42%, rgb(2 3 5 / calc(0.66 * var(--dsh-aqua-frost, 1))));
+    /* The deep stops are CAPPED: a raw 0.70×frost / 0.66×frost would hit
+       0.98/0.92 at max frost and turn the pane into a solid near-black slab
+       (the "raising frost makes it darker" bug). Clamping keeps the glass
+       translucent — frostier, not inker — while the light catches above still
+       brighten with frost, so the reading is "mist", not "black". */
+    linear-gradient(145deg, rgb(0 245 212 / calc(0.115 * var(--dsh-aqua-frost, 1))), rgb(12 13 18 / min(0.86, calc(0.70 * var(--dsh-aqua-frost, 1)))) 42%, rgb(2 3 5 / min(0.84, calc(0.66 * var(--dsh-aqua-frost, 1)))));
   /* Mineradio glass depth + Liquid-Glass specular rim: a crisp 1px inner
      edge, a bright catch-light, a faint thickness line, then the outer drop
      + brand bloom. The catch-light reads --dsh-aqua-spec-x/y (written by
