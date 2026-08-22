@@ -94,6 +94,15 @@
   position: static;
 }
 
+/* The sticky banner WRAPPER paints an OPAQUE `--dsw-alias-bg-base` (#08090B)
+   strip behind the code block's banner — read as a solid black slab against
+   the glass. The wrapper's only job was the sticky scroll backdrop, which
+   float mode already disables, so drop its fill and let the transparent
+   banner tint (and the fluid) show through. */
+[data-dsh-float] [class*='bannerWrap'] {
+  background-color: transparent;
+}
+
 [data-dsh-float] [data-phase='active'] [data-conversation-scroll] {
   margin-top: -95px;
   padding-top: 107px;
