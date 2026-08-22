@@ -188,6 +188,67 @@ export const MINERADIO_TOKEN_OVERRIDES: ThemeTokenOverrides = {
   },
 }
 
+/** Preset global text-ink tints: the "text colour" switch swaps the warm
+ *  champagne ink for a neutral / mint / rose tint while keeping the SAME
+ *  lightness ladder, so every preset stays readable in either scheme. The
+ *  champagne preset reproduces the shipped values exactly (no regression). */
+export type TextStyle = 'champagne' | 'neutral' | 'mint' | 'rose'
+
+/** hsl(h,s,l) → #rrggbb (s/l in 0-1, h in degrees). */
+function hslHex(h: number, s: number, l: number): string {
+  const c = (1 - Math.abs(2 * l - 1)) * s
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
+  const m = l - c / 2
+  let r = 0, g = 0, b = 0
+  if (h < 60) { r = c; g = x } else if (h < 120) { r = x; g = c }
+  else if (h < 180) { g = c; b = x } else if (h < 240) { g = x; b = c }
+  else if (h < 300) { r = x; b = c } else { r = c; b = x }
+  const hex = (v: number): string => Math.round((v + m) * 255).toString(16).padStart(2, '0')
+  return `#${hex(r)}${hex(g)}${hex(b)}`
+}
+
+/** The readable ink ladder for one preset, per scheme. */
+interface TextInkPalette {
+  primary: string
+  secondary: string
+  tertiary: string
+  caption: string
+  dimmed: string
+  bluish: string
+  primaryDimmed: string
+}
+
+function textInkPalette(style: TextStyle): { light: TextInkPalette; dark: TextInkPalette } {
+  if (style === 'champagne') {
+    return {
+      light: { primary: '#2A241A', secondary: '#5C5240', tertiary: '#7A6F5A', caption: '#8F8572', dimmed: '#C8BFAB', bluish: '#A97A2A', primaryDimmed: '#4A3A1E' },
+      dark: { primary: '#F2F0EA', secondary: '#CBC4B8', tertiary: '#98917F', caption: '#7A7468', dimmed: '#5A564C', bluish: '#E8CEA0', primaryDimmed: '#EADFC6' },
+    }
+  }
+  const h = style === 'mint' ? 166 : style === 'rose' ? 352 : 0
+  const s = style === 'mint' ? 0.18 : style === 'rose' ? 0.15 : 0
+  return {
+    light: {
+      primary: hslHex(h, s, 0.13),
+      secondary: hslHex(h, s, 0.32),
+      tertiary: hslHex(h, s, 0.46),
+      caption: hslHex(h, s, 0.53),
+      dimmed: hslHex(h, s, 0.75),
+      bluish: hslHex(h, Math.min(1, s + 0.12), 0.34),
+      primaryDimmed: hslHex(h, s, 0.22),
+    },
+    dark: {
+      primary: hslHex(h, s, 0.95),
+      secondary: hslHex(h, s, 0.73),
+      tertiary: hslHex(h, s, 0.60),
+      caption: hslHex(h, s, 0.48),
+      dimmed: hslHex(h, s, 0.36),
+      bluish: hslHex(h, Math.min(1, s + 0.12), 0.80),
+      primaryDimmed: hslHex(h, s, 0.88),
+    },
+  }
+}
+
 /**
  * Compatibility-mode token set: the same palette as the floating mode, but
  * every surface token turns translucent, so the fluid/wallpaper backdrop
@@ -244,6 +305,8 @@ function writeEnabled(value: boolean): void {
 export interface MineradioSettings {
   /** Rendering mode: mica (frosted floating cards) or the stock layout with a generic glass material. */
   mode: 'mica' | 'compat'
+  /** Global text-ink tint: warm champagne (default) or a neutral/mint/rose. */
+  textStyle: TextStyle
   /** Glass backdrop blur radius, px. */
   blur: number
   /** Glass fill opacity, 0-100 (50 = the shipped look; drives the frost multiplier). */
@@ -298,6 +361,7 @@ export interface MineradioSettings {
 /** Shipped defaults — what a first-time install sees (the tuned look). */
 const SETTINGS_DEFAULTS: MineradioSettings = {
   mode: 'mica',
+  textStyle: 'champagne',
   blur: 22,
   frost: 50,
   bgBrightness: 50,
@@ -344,6 +408,7 @@ const NUMERIC_KEYS = {
 type NumericKey = keyof typeof NUMERIC_KEYS
 
 const MODE_KEY = 'dsh.ui-mineradio.mode'
+const TEXT_STYLE_KEY = 'dsh.ui-mineradio.textStyle'
 const BACKGROUND_KEY = 'dsh.ui-mineradio.background'
 const WALLPAPER_KEY = 'dsh.ui-mineradio.wallpaper'
 const AUTO_TINT_KEY = 'dsh.ui-mineradio.autoTint'
@@ -416,6 +481,25 @@ function readMode(): 'mica' | 'compat' {
 function writeMode(value: 'mica' | 'compat'): void {
   try {
     localStorage.setItem(MODE_KEY, value)
+  } catch {
+    /* in-memory state still applies */
+  }
+}
+
+/** Read the global text-ink preset (absent/invalid means 'champagne'). */
+function readTextStyle(): TextStyle {
+  try {
+    const stored = localStorage.getItem(TEXT_STYLE_KEY)
+    return stored === 'neutral' || stored === 'mint' || stored === 'rose' ? stored : 'champagne'
+  } catch {
+    return 'champagne'
+  }
+}
+
+/** Persist the global text-ink preset. */
+function writeTextStyle(value: TextStyle): void {
+  try {
+    localStorage.setItem(TEXT_STYLE_KEY, value)
   } catch {
     /* in-memory state still applies */
   }
@@ -646,7 +730,7 @@ export class MineradioLayer {
           this.sync()
         }
         const key = event.key
-        if (key !== null && (key in NUMERIC_KEYS || key === BACKGROUND_KEY || key === WALLPAPER_KEY || key === AUTO_TINT_KEY || key === WALLPAPER_MASK_KEY || key === MODE_KEY || key === WHALE_KEY || key === CRITTERS_KEY || key === MESH_KEY || key === SPOTLIGHT_KEY || key === PRESS_KEY || key === AUDIO_REACT_KEY)) {
+        if (key !== null && (key in NUMERIC_KEYS || key === BACKGROUND_KEY || key === WALLPAPER_KEY || key === AUTO_TINT_KEY || key === WALLPAPER_MASK_KEY || key === MODE_KEY || key === TEXT_STYLE_KEY || key === WHALE_KEY || key === CRITTERS_KEY || key === MESH_KEY || key === SPOTLIGHT_KEY || key === PRESS_KEY || key === AUDIO_REACT_KEY)) {
           this.reloadSettings()
           if (this.enabled) { this.applySettings(); this.applyTokens(); this.applyFluidPalettes(); this.syncWhale(); this.syncAudioReact() }
         }
@@ -722,6 +806,7 @@ export class MineradioLayer {
     }
     this.settings = {
       mode: readMode(),
+      textStyle: readTextStyle(),
       blur: readSetting('blur'),
       frost: readSetting('frost'),
       fluidHue: readSetting('fluidHue'),
@@ -763,6 +848,14 @@ export class MineradioLayer {
     this.settings.mode = value
     writeMode(value)
     if (this.enabled) { this.applySettings(); this.applyTokens() }
+  }
+
+  /** Set the global text-ink preset ('champagne' | 'neutral' | 'mint' | 'rose'). */
+  setTextStyle(value: TextStyle): void {
+    if (value === this.settings.textStyle) return
+    this.settings.textStyle = value
+    writeTextStyle(value)
+    if (this.enabled) this.applyTokens()
   }
 
   /** Set the glass blur radius (px). */
@@ -1238,10 +1331,26 @@ export class MineradioLayer {
   /** Apply the mode's token layer (floating palette, or translucent compat). */
   private applyTokens(): void {
     this.tokenDisposer?.()
+    const base = this.settings.mode === 'compat' ? COMPAT_TOKEN_OVERRIDES : MINERADIO_TOKEN_OVERRIDES
     this.tokenDisposer = this.ctx.theme.overrideTokens(
       OVERRIDE_SOURCE,
-      this.settings.mode === 'compat' ? COMPAT_TOKEN_OVERRIDES : MINERADIO_TOKEN_OVERRIDES,
+      { ...base, ...this.inkOverrides() },
     )
+  }
+
+  /** The text-ink override for the current preset: redefines the warm ink
+   *  tokens only; every other token falls through to the base layer. */
+  private inkOverrides(): ThemeTokenOverrides {
+    const p = textInkPalette(this.settings.textStyle)
+    return {
+      '--dsw-alias-label-primary': { light: p.light.primary, dark: p.dark.primary },
+      '--dsw-alias-label-secondary': { light: p.light.secondary, dark: p.dark.secondary },
+      '--dsw-alias-label-tertiary': { light: p.light.tertiary, dark: p.dark.tertiary },
+      '--dsw-alias-label-caption': { light: p.light.caption, dark: p.dark.caption },
+      '--dsw-alias-label-dimmed': { light: p.light.dimmed, dark: p.dark.dimmed },
+      '--dsw-alias-label-primary-bluish': { light: p.light.bluish, dark: p.dark.bluish },
+      '--dsw-alias-label-primary-dimmed': { light: p.light.primaryDimmed, dark: p.dark.primaryDimmed },
+    }
   }
 
   private mount(): void {

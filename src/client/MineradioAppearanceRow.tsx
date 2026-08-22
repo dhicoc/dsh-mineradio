@@ -17,12 +17,15 @@ import type {} from '@deepseek-ai/dsh-client-ui-settings/client'
 import { fileToDataUrl, HueStrip, Knob, Segmented } from './MineradioControls.tsx'
 import { loadVideoHandle, saveVideoBlob, saveVideoHandle } from './wallpaper-store.ts'
 import type { createMineradioRowStore } from './settings-store.ts'
+import type { TextStyle } from './theme-layer.ts'
 import css from './MineradioAppearanceRow.module.css'
 
 /** Injected business face: every knob write except the master switch. */
 export interface MineradioAppearanceRowInjected {
   /** Set the rendering mode. */
   setMode: (value: 'mica' | 'compat') => void
+  /** Set the global text-ink preset. */
+  setTextStyle: (value: TextStyle) => void
   /** Set the glass blur radius, px. */
   setBlur: (value: number) => void
   /** Set the glass frost amount, 0-100. */
@@ -87,12 +90,13 @@ export type MineradioAppearanceRowComponentProps =
  */
 export function MineradioAppearanceRow(props: MineradioAppearanceRowComponentProps) {
   const {
-    t, setMode, setBlur, setFrost, setFluidHue, setFluidDepth, setDispersionHue, setDispersionRefract, setBgBrightness,
+    t, setMode, setTextStyle, setBlur, setFrost, setFluidHue, setFluidDepth, setDispersionHue, setDispersionRefract, setBgBrightness,
     setBackground, setWallpaper, setAutoTint, setWhale, setCritters, setMesh, setStarDensity, setSpotlight, setPress, setAudioReact,
     setWallpaperBlur, setWallpaperFrost, setWallpaperMask, setWallpaperMaskBlur, setWallpaperMaskOpacity, setVideoBlur, setVideoBrightness, authorizeVideo, useStore,
   } = props
   const enabled = useStore(s => s.enabled)
   const mode = useStore(s => s.mode)
+  const textStyle = useStore(s => s.textStyle)
   const blur = useStore(s => s.blur)
   const frost = useStore(s => s.frost)
   const fluidHue = useStore(s => s.fluidHue)
@@ -214,6 +218,26 @@ export function MineradioAppearanceRow(props: MineradioAppearanceRowComponentPro
                 { id: 'compat', label: t('mineradio.modeCompat') },
               ]}
               onSelect={setMode}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* 文字颜色：全局文本墨色预设 */}
+      <div className={css.subGroup}>
+        <div className={css.subTitle}>{t('mineradio.textColor')}</div>
+        <div className={css.controls}>
+          <div className={css.row}>
+            <Segmented
+              label={t('mineradio.textColor')}
+              value={textStyle}
+              options={[
+                { id: 'champagne', label: t('mineradio.textColorChampagne') },
+                { id: 'neutral', label: t('mineradio.textColorNeutral') },
+                { id: 'mint', label: t('mineradio.textColorMint') },
+                { id: 'rose', label: t('mineradio.textColorRose') },
+              ]}
+              onSelect={setTextStyle}
             />
           </div>
         </div>

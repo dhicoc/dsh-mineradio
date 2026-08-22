@@ -4,6 +4,7 @@
  * the only writer; the row component reads via props.useStore.
  */
 import { defineStore, type EngineStoreHandle } from '@deepseek-ai/dsh-client-runtime/client'
+import type { TextStyle } from './theme-layer.ts'
 
 /** Store state mirrored from the Mineradio settings scope. */
 export interface MineradioRowState {
@@ -11,6 +12,8 @@ export interface MineradioRowState {
   enabled: boolean
   /** Rendering mode: mica or stock layout with generic glass. */
   mode: 'mica' | 'compat'
+  /** Global text-ink tint preset. */
+  textStyle: TextStyle
   /** Glass blur radius, px. */
   blur: number
   /** Glass frost amount, 0-100. */
@@ -69,6 +72,7 @@ export interface MineradioRowState {
 export interface MineradioSettingsPayload {
   enabled: boolean
   mode: 'mica' | 'compat'
+  textStyle: TextStyle
   blur: number
   frost: number
   fluidHue: number
@@ -110,6 +114,7 @@ export function createMineradioRowStore(): EngineStoreHandle<MineradioRowState, 
     init: (): MineradioRowState => ({
       enabled: true,
       mode: 'mica',
+      textStyle: 'champagne',
       blur: 24,
       frost: 14,
       fluidHue: 44,
@@ -142,6 +147,7 @@ export function createMineradioRowStore(): EngineStoreHandle<MineradioRowState, 
         if (revision <= d.revision) return
         d.enabled = next.enabled
         d.mode = next.mode
+        d.textStyle = next.textStyle
         d.blur = next.blur
         d.frost = next.frost
         d.fluidHue = next.fluidHue

@@ -51,6 +51,7 @@ export function apply(ctx: ClientContext): void {
     return {
       enabled: layer.getEnabled(),
       mode: s.mode,
+      textStyle: s.textStyle,
       blur: s.blur,
       frost: s.frost,
       fluidHue: s.fluidHue,
@@ -106,6 +107,10 @@ export function apply(ctx: ClientContext): void {
     return {
       setMode: (mode) => {
         layer.setMode(mode)
+        sync()
+      },
+      setTextStyle: (textStyle) => {
+        layer.setTextStyle(textStyle)
         sync()
       },
       setBlur: (blur) => {
