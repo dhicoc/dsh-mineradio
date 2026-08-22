@@ -1096,13 +1096,17 @@ export class MineradioLayer {
   private applySettings(): void {
     const style = document.documentElement.style
     style.setProperty('--dsh-aqua-blur', `${this.settings.blur}px`)
-    // Frost 0-100 → a 0-1.4 alpha multiplier (50 = 1x). Capped so max frost
-    // stays translucent frosted glass instead of collapsing to a solid
-    // opaque slab (the dark card would otherwise hit 100% and read as solid
-    // navy).
-    style.setProperty('--dsh-aqua-frost', String(Math.min(this.settings.frost / 50, 1.4)))
+    // Frost 0-100 → a 0-1.0 alpha multiplier (50 = 1x). It is CAPPED AT 1.0:
+    // the dark surfaces mix `calc(X% * var(--dsh-aqua-frost))`, so any cap
+    // above 1.0 pushes every translucent dark fill toward opaque black
+    // ("raising frost makes it darker"). Past the mid point the knob instead
+    // drives a WHITE veil, so more frost reads as mist/light, never ink.
+    style.setProperty('--dsh-aqua-frost', String(Math.min(this.settings.frost / 50, 1.0)))
     // The new-session button's frost rides the same knob, +20 points.
-    style.setProperty('--dsh-aqua-surface-frost', String(Math.min((this.settings.frost + 20) / 50, 1.4)))
+    style.setProperty('--dsh-aqua-surface-frost', String(Math.min((this.settings.frost + 20) / 50, 1.0)))
+    // White mist veil: 0 at frost 50, ~0.4 at 100 — lightens the glass as it
+    // frosts over, instead of deepening it (see glass-card gradients).
+    style.setProperty('--dsh-aqua-frost-white', String(Math.max(0, (this.settings.frost - 50) / 50) * 0.4))
     // Accent hue: auto-extracted from the wallpaper when auto-tint is on and
     // a wallpaper is active, otherwise the fluid tone (spotlight/bloom) and
     // the dispersion knob.
